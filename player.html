@@ -73,7 +73,7 @@ if (!player) {
   document.getElementById("name").innerText = "No player selected";
 } else {
 
-  fetch("YOUR_APPS_SCRIPT_URL_HERE?player=" + encodeURIComponent(player))
+  fetch("https://script.google.com/macros/s/AKfycbzuWLCBe3q12dR8zlRYmUx0QWCutjMZvaUlnkb887jTMd_8pEdE1BN30fp5RUXPCFuA1Q/exec?player=" + encodeURIComponent(player))
     .then(res => res.json())
     .then(data => {
 
