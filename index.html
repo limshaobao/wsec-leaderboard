@@ -156,45 +156,30 @@ function changeShop() {
 
 function renderLeaderboard() {
 
-  // -----------------------------
-  // SHOP PAGE BUTTON
-  // -----------------------------
   const shopLink =
     document.getElementById("shopPageLink");
 
   if (currentShop !== "GLOBAL") {
 
     shopLink.style.display = "inline-block";
-
     shopLink.href =
       "./shop.html?shop=" +
       encodeURIComponent(currentShop);
 
   } else {
-
     shopLink.style.display = "none";
   }
 
-  // -----------------------------
-  // DATA SOURCE
-  // -----------------------------
   let list = [];
 
   if (currentShop === "GLOBAL") {
-
     list = allPlayers;
-
   } else {
-
     list = shopData[currentShop].leaderboard;
   }
 
-  // -----------------------------
-  // TABLE HEADER
-  // -----------------------------
   let html = `
     <table>
-
       <tr>
         <th>Rank</th>
         <th>Player</th>
@@ -204,62 +189,68 @@ function renderLeaderboard() {
   `;
 
   // -----------------------------
-  // GLOBAL VIEW
+  // GLOBAL VIEW (UPDATED LOGIC)
   // -----------------------------
   if (currentShop === "GLOBAL") {
 
     const shopWinners = new Set();
 
     Object.values(shopData).forEach(shop => {
-
       if (shop.finalWinner) {
         shopWinners.add(shop.finalWinner);
       }
     });
 
-    // dynamic blue range
-    const eligible = [];
-    list.forEach(p => {
+    // -----------------------------
+    // BUILD QUALIFICATION SET
+    // -----------------------------
+    const blueSet = new Set();
 
-      if (p.globalRank === 1) return;
-      if (shopWinners.has(p.player)) return;
+    Object.values(shopData).forEach(shop => {
 
-      eligible.push(p);
+      const leaderboard = (shop.leaderboard || [])
+        .slice()
+        .sort((a, b) => (a.shopRank || 999) - (b.shopRank || 999));
+
+      const winner = shop.finalWinner;
+
+      // remove winner from pool (slot shift)
+      const pool = leaderboard.filter(p => p.player !== winner);
+
+      // SLOT FILLING:
+      // effective 1st (green replacement), then 2 blue slots
+      const green = pool[0];   // replaces displaced winner
+      const blue1 = pool[1];   // 2nd slot
+      const blue2 = pool[2];   // 3rd slot
+
+      // IMPORTANT RULE:
+      // green is NOT blue eligible
+
+      if (blue1) blueSet.add(blue1.player);
+      if (blue2) blueSet.add(blue2.player);
     });
-
-    eligible.sort((a, b) =>
-      a.globalRank - b.globalRank
-    );
-
-    const blueGroup = eligible.slice(0, 16);
-    const blueSet = new Set(
-      blueGroup.map(p => p.player)
-    );
 
     list.forEach(p => {
 
       const rank = p.globalRank;
-      const points =
-        Number(p.totalPoints).toFixed(1);
-      const episodes =
-        p.episodesPlayed ?? "-";
+      const points = Number(p.totalPoints).toFixed(1);
+      const episodes = p.episodesPlayed ?? "-";
 
       let style = "";
 
       // 🥇 GLOBAL WINNER
       if (rank === 1) {
-        style =
-          "background:#ffd700;font-weight:bold;";
+        style = "background:#ffd700;font-weight:bold;";
       }
+
       // 🟩 SHOP WINNERS
       else if (shopWinners.has(p.player)) {
-        style =
-          "background:#b6fcb6;font-weight:bold;";
+        style = "background:#b6fcb6;font-weight:bold;";
       }
-      // 🟦 NEXT 16
+
+      // 🟦 QUALIFIERS (2nd–3rd per shop after shift)
       else if (blueSet.has(p.player)) {
-        style =
-          "background:#cfe8ff;";
+        style = "background:#cfe8ff;";
       }
 
       html += `
@@ -270,7 +261,6 @@ function renderLeaderboard() {
               ${p.player}
             </a>
           </td>
-
           <td>${points}</td>
           <td>${episodes}</td>
         </tr>
@@ -279,71 +269,46 @@ function renderLeaderboard() {
   }
 
   // -----------------------------
-  // SHOP VIEW
+  // SHOP VIEW (UNCHANGED)
   // -----------------------------
   else {
 
     list.forEach(p => {
 
       const rank = p.shopRank;
-
-      const points =
-        Number(p.totalPoints).toFixed(1);
-
-      const episodes =
-        p.episodesPlayed ?? "-";
+      const points = Number(p.totalPoints).toFixed(1);
+      const episodes = p.episodesPlayed ?? "-";
 
       let style = "";
 
-      // inherited winner
-      if (
-        p.player ===
-        shopData[currentShop].finalWinner
-      ) {
-
-        style =
-          "background:#b6fcb6;font-weight:bold;";
+      if (p.player === shopData[currentShop].finalWinner) {
+        style = "background:#b6fcb6;font-weight:bold;";
       }
 
-      // displaced actual rank 1
       else if (
         rank === 1 &&
-        p.player !==
-          shopData[currentShop].finalWinner
+        p.player !== shopData[currentShop].finalWinner
       ) {
-
-        style =
-          "background:#fff3cd;font-weight:bold;";
+        style = "background:#fff3cd;font-weight:bold;";
       }
 
       html += `
         <tr style="${style}">
-
           <td>${rank}</td>
-
           <td>
-
             <a href="./player_v2.html?player=${encodeURIComponent(p.player)}">
-
               ${p.player}
-
             </a>
-
           </td>
-
           <td>${points}</td>
-
           <td>${episodes}</td>
-
         </tr>
       `;
     });
   }
 
   html += `</table>`;
-
-  document.getElementById("leaderboard").innerHTML =
-    html;
+  document.getElementById("leaderboard").innerHTML = html;
 }
 
 </script>
