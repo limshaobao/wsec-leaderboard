@@ -450,44 +450,46 @@ html += `</table></div></div>`;
 /* Build clean best-per-episode map */
 const episodeMap = {};
 
-p.episodes.forEach(ep => {
+  p.episodes.forEach(ep => {
+    const key = ep.episode;
 
-  const key = ep.episode;
+    if (!episodeMap[key] || ep.points > episodeMap[key].points) {
+      episodeMap[key] = {
+        episode: ep.episode,
+        points: ep.points
+      };
+    }
+  });
 
-  // keep only highest scoring entry per episode
-  if (!episodeMap[key] || ep.points > episodeMap[key].points) {
-    episodeMap[key] = {
-      episode: ep.episode,
-      points: ep.points
-    };
-  }
+  const graphData = Object.values(episodeMap)
+    .sort((a, b) =>
+      Number(a.episode.toString().replace(/\D/g, '')) -
+      Number(b.episode.toString().replace(/\D/g, ''))
+    );
 
-});
+  const ctx = document.getElementById("chart");
 
-/* Convert + enforce strict chronological order */
-const graphData = Object.values(episodeMap)
-  .sort((a, b) =>
-    Number(a.episode.toString().replace(/\D/g, '')) -
-    Number(b.episode.toString().replace(/\D/g, ''))
-  );
+  new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: graphData.map(x => x.episode),
+      datasets: [{
+        label: "Best Episode Score",
+        data: graphData.map(x => x.points),
+        tension: 0.25
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false
+    }
+  });
 
-/* Render chart */
-const ctx = document.getElementById("chart");
-
-new Chart(ctx, {
-  type: "line",
-  data: {
-    labels: graphData.map(x => x.episode),
-    datasets: [{
-      label: "Best Episode Score",
-      data: graphData.map(x => x.points),
-      tension: 0.25
-    }]
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false
-  }
+})
+.catch(err => {
+  console.error(err);
+  document.getElementById("content").innerHTML =
+    "<h2>Failed to load player</h2>";
 });
 
 </script>
