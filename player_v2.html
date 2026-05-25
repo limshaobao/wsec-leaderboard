@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+  <meta charset="UTF-8">
+  <title>Player Profile</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f1e8;
+      margin: 0;
+      padding: 30px;
+      color: #222;
+    }
+
+    .container {
+      max-width: 1250px;
+      margin: auto;
+    }
+
+    .card {
+      background: white;
+      border-radius: 14px;
+      padding: 24px;
+      margin-bottom: 30px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+
+    h1, h2 {
+      margin-top: 0;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit,minmax(180px,1fr));
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    .stat {
+      background: #f8f8f8;
+      border-radius: 10px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .stat-label {
+      font-size: 14px;
+      color: #666;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      overflow: hidden;
+      border-radius: 12px;
+      min-width: 900px;
+    }
+
+    th {
+      background: #222;
+      color: white;
+      padding: 14px;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 12px 14px;
+      border-bottom: 1px solid #eee;
+      vertical-align: top;
+      white-space: nowrap;
+    }
+
+    tr:nth-child(even) {
+      background: #fafafa;
+    }
+
+    tr:hover {
+      background: #f1f7ff;
+    }
+
+    .points {
+      font-weight: bold;
+    }
+
+    .comment {
+      font-style: italic;
+      color: #555;
+      white-space: normal;
+      min-width: 200px;
+    }
+
+    .back-link {
+      display: inline-block;
+      margin-bottom: 20px;
+      text-decoration: none;
+      font-weight: bold;
+      color: #005bbb;
+    }
+
+    .center-table th,
+    .center-table td {
+      text-align: center;
+    }
+
+    .chart-container {
+      position: relative;
+      width: 100%;
+      height: 420px;
+    }
+
+    @media (max-width: 768px) {
+
+      body {
+        padding: 14px;
+      }
+
+      .card {
+        padding: 18px;
+      }
+
+      th,
+      td {
+        padding: 10px;
+        font-size: 14px;
+      }
+
+      .stat-value {
+        font-size: 22px;
+      }
+
+      .chart-container {
+        height: 320px;
+      }
+    }
+
+  </style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+  <a class="back-link" href="./index.html">
+    ← Back to Leaderboard
+  </a>
+
+  <div id="content">
+    Loading player...
+  </div>
+
+</div>
+
+<script>
+
+const API_URL =
+"https://script.google.com/macros/s/AKfycbzuWLCBe3q12dR8zlRYmUx0QWCutjMZvaUlnkb887jTMd_8pEdE1BN30fp5RUXPCFuA1Q/exec";
+
+const params = new URLSearchParams(window.location.search);
+
+const playerName = params.get("player");
+
+if (!playerName) {
+
+  document.getElementById("content").innerHTML =
+    "<h2>No player specified.</h2>";
+}
+
+fetch(API_URL + "?player=" + encodeURIComponent(playerName))
+
+  .then(r => r.text())
+  .then(text => JSON.parse(text))
+
+  .then(data => {
+
+    const p = data.player;
+
+    if (!p) {
+
+      document.getElementById("content").innerHTML =
+        "<h2>Player not found.</h2>";
+
+      return;
+    }
+
+    // =====================================
+    // SORT HISTORY
+    // =====================================
+    p.episodes.sort((a, b) => {
+
+      if (a.episode !== b.episode) {
+        return a.episode.localeCompare(b.episode);
+      }
+
+      return b.points - a.points;
+    });
+
+    let html = "";
+
+    // =====================================
+    // HEADER CARD
+    // =====================================
+    html += `
+      <div class="card">
+
+        <h1>${p.player}</h1>
+
+        <div class="stats">
+
+          <div class="stat">
+            <div class="stat-value">
+              #${p.globalRank}
+            </div>
+            <div class="stat-label">
+              Global Rank
+            </div>
+          </div>
+
+          <div class="stat">
+            <div class="stat-value">
+              ${p.totalPoints.toFixed(1)}
+            </div>
+            <div class="stat-label">
+              Top 5 Points
+            </div>
+          </div>
+
+          <div class="stat">
+            <div class="stat-value">
+              ${p.bestScore.toFixed(1)}
+            </div>
+            <div class="stat-label">
+              Best Episode Score
+            </div>
+          </div>
+
+          <div class="stat">
+            <div class="stat-value">
+              ${p.episodesPlayed}
+            </div>
+            <div class="stat-label">
+              Episodes Played
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    `;
+
+    // =====================================
+    // ADVANCED STATS
+    // =====================================
+    const tops =
+      p.episodes.filter(x => Number(x.placement) === 1).length;
+
+    const topCuts =
+      p.episodes.filter(x => Number(x.topCutRounds || 0) > 0).length;
+
+    const totalWins =
+      p.episodes.reduce((s,x)=>s+Number(x.matchWins || 0),0);
+
+    const totalLosses =
+      p.episodes.reduce((s,x)=>s+Number(x.matchLosses || 0),0);
+
+    const swissWins =
+      p.episodes.reduce((s,x)=>s+Number(x.swissWins || 0),0);
+
+    const swissRounds =
+      p.episodes.reduce((s,x)=>s+Number(x.swissRounds || 0),0);
+
+    const overallWinrate =
+      (totalWins + totalLosses) > 0
+      ? ((totalWins / (totalWins + totalLosses)) * 100)
+      : 0;
+
+    const swissWinrate =
+      swissRounds > 0
+      ? ((swissWins / swissRounds) * 100)
+      : 0;
+
+    html += `
+      <div class="card">
+
+        <h2>Advanced Stats</h2>
+
+        <div class="stats">
+
+          <div class="stat">
+            <div class="stat-value">
+              ${tops}
+            </div>
+            <div class="stat-label">
+              Tops
+            </div>
+          </div>
+
+          <div class="stat">
+            <div class="stat-value">
+              ${topCuts}
+            </div>
+            <div class="stat-label">
+              Top Cuts
+            </div>
+          </div>
+
+          <div class="stat">
+            <div class="stat-value">
+              ${overallWinrate.toFixed(1)}%
+            </div>
+            <div class="stat-label">
+              Winrate
+            </div>
+          </div>
+
+          <div class="stat">
+            <div class="stat-value">
+              ${swissWinrate.toFixed(1)}%
+            </div>
+            <div class="stat-label">
+              Swiss Winrate
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    `;
+
+    // =====================================
+    // MATCH RECORD
+    // =====================================
+    html += `
+      <div class="card">
+
+        <h2>Match Record</h2>
+
+        <div class="stats">
+
+          <div class="stat">
+            <div class="stat-value">
+              ${totalWins}
+            </div>
+            <div class="stat-label">
+              Match Wins
+            </div>
+          </div>
+
+          <div class="stat">
+            <div class="stat-value">
+              ${totalLosses}
+            </div>
+            <div class="stat-label">
+              Match Losses
+            </div>
+          </div>
+
+          <div class="stat">
+            <div class="stat-value">
+              ${swissWins}
+            </div>
+            <div class="stat-label">
+              Swiss Wins
+            </div>
+          </div>
+
+          <div class="stat">
+            <div class="stat-value">
+              ${swissRounds}
+            </div>
+            <div class="stat-label">
+              Swiss Rounds Played
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    `;
+
+    // =====================================
+    // BEST EPISODE TABLE
+    // =====================================
+    const episodeBestMap = {};
+
+    p.episodes.forEach(ep => {
+
+      if (
+        !episodeBestMap[ep.episode] ||
+        ep.points > episodeBestMap[ep.episode].points
+      ) {
+        episodeBestMap[ep.episode] = { ...ep };
+      }
+    });
+
+    const bestEpisodes =
+      Object.values(episodeBestMap)
+      .sort((a,b)=>b.points-a.points);
+
+    html += `
+      <div class="card">
+
+        <h2>Top Scores Per Episode</h2>
+
+        <div class="table-wrap">
+
+        <table>
+
+          <tr>
+            <th>Episode</th>
+            <th>Shop</th>
+            <th>Position</th>
+            <th>Deck</th>
+            <th>Swiss Wins</th>
+            <th>Winrate</th>
+            <th>Swiss Winrate</th>
+            <th>Points</th>
+          </tr>
+    `;
+
+    bestEpisodes.forEach(ep => {
+
+      const wr =
+        ep.matchWins + ep.matchLosses > 0
+        ? ((ep.matchWins / (ep.matchWins + ep.matchLosses)) * 100)
+        : 0;
+
+      const swr =
+        ep.swissRounds > 0
+        ? ((ep.swissWins / ep.swissRounds) * 100)
+        : 0;
+
+      html += `
+        <tr>
+
+          <td>${ep.episode}</td>
+
+          <td>
+            <a href="./shop.html?shop=${encodeURIComponent(ep.shop)}">
+              ${ep.shop}
+            </a>
+          </td>
+
+          <td>${ep.placement || "-"}</td>
+
+          <td>${ep.set || "-"}</td>
+
+          <td>${ep.swissWins}</td>
+
+          <td>${wr.toFixed(1)}%</td>
+
+          <td>${swr.toFixed(1)}%</td>
+
+          <td class="points">
+            ${Number(ep.points).toFixed(1)}
+          </td>
+
+        </tr>
+      `;
+    });
+
+    html += `
+        </table>
+
+        </div>
+
+      </div>
+    `;
+
+    // =====================================
+    // FAVOURED DECKS
+    // =====================================
+    const deckMap = {};
+
+    p.episodes.forEach(ep => {
+
+      const deck = ep.set || "Unknown";
+
+      if (!deckMap[deck]) {
+
+        deckMap[deck] = {
+          deck,
+          usage: 0,
+          swissWins: 0,
+          swissRounds: 0,
+          wins: 0,
+          losses: 0,
+          tops: 0,
+          topCuts: 0,
+          points: 0
+        };
+      }
+
+      const d = deckMap[deck];
+
+      d.usage += 1;
+      d.swissWins += Number(ep.swissWins || 0);
+      d.swissRounds += Number(ep.swissRounds || 0);
+      d.wins += Number(ep.matchWins || 0);
+      d.losses += Number(ep.matchLosses || 0);
+      d.points += Number(ep.points || 0);
+
+      if (Number(ep.placement) === 1) {
+        d.tops += 1;
+      }
+
+      if (Number(ep.topCutRounds || 0) > 0) {
+        d.topCuts += 1;
+      }
+    });
+
+    const decks =
+      Object.values(deckMap)
+      .sort((a,b)=>b.points-a.points);
+
+    html += `
+      <div class="card">
+
+        <h2>Favoured Decks</h2>
+
+        <div class="table-wrap">
+
+        <table class="center-table">
+
+          <tr>
+            <th>Deck</th>
+            <th>Usage</th>
+            <th>Total Swiss Wins</th>
+            <th>Winrate</th>
+            <th>Swiss Winrate</th>
+            <th>Tops</th>
+            <th>Top Cuts</th>
+            <th>Total Points</th>
+          </tr>
+    `;
+
+    decks.forEach(d => {
+
+      const wr =
+        d.wins + d.losses > 0
+        ? ((d.wins / (d.wins + d.losses)) * 100)
+        : 0;
+
+      const swr =
+        d.swissRounds > 0
+        ? ((d.swissWins / d.swissRounds) * 100)
+        : 0;
+
+      html += `
+        <tr>
+
+          <td>${d.deck}</td>
+
+          <td>${d.usage}</td>
+
+          <td>${d.swissWins}</td>
+
+          <td>${wr.toFixed(1)}%</td>
+
+          <td>${swr.toFixed(1)}%</td>
+
+          <td>${d.tops}</td>
+
+          <td>${d.topCuts}</td>
+
+          <td>${d.points.toFixed(1)}</td>
+
+        </tr>
+      `;
+    });
+
+    html += `
+        </table>
+
+        </div>
+
+      </div>
+    `;
+
+    // =====================================
+    // EPISODE HISTORY
+    // =====================================
+    html += `
+      <div class="card">
+
+        <h2>Episode History</h2>
+
+        <div class="table-wrap">
+
+        <table>
+
+          <tr>
+            <th>Episode</th>
+            <th>Shop</th>
+            <th>Position</th>
+            <th>Deck</th>
+            <th>Swiss Wins</th>
+            <th>Winrate</th>
+            <th>Swiss Winrate</th>
+            <th>Points</th>
+            <th>Comments</th>
+          </tr>
+    `;
+
+    p.episodes.forEach(ep => {
+
+      const wr =
+        ep.matchWins + ep.matchLosses > 0
+        ? ((ep.matchWins / (ep.matchWins + ep.matchLosses)) * 100)
+        : 0;
+
+      const swr =
+        ep.swissRounds > 0
+        ? ((ep.swissWins / ep.swissRounds) * 100)
+        : 0;
+
+      html += `
+        <tr>
+
+          <td>${ep.episode}</td>
+
+          <td>
+            <a href="./shop.html?shop=${encodeURIComponent(ep.shop)}">
+              ${ep.shop}
+            </a>
+          </td>
+
+          <td>${ep.placement || "-"}</td>
+
+          <td>${ep.set || "-"}</td>
+
+          <td>${ep.swissWins}</td>
+
+          <td>${wr.toFixed(1)}%</td>
+
+          <td>${swr.toFixed(1)}%</td>
+
+          <td class="points">
+            ${Number(ep.points).toFixed(1)}
+          </td>
+
+          <td class="comment">
+            ${ep.comment || ""}
+          </td>
+
+        </tr>
+      `;
+    });
+
+    html += `
+        </table>
+
+        </div>
+
+      </div>
+    `;
+
+    // =====================================
+    // PROGRESSION GRAPH
+    // =====================================
+    html += `
+      <div class="card">
+
+        <h2>Best Episode Progression</h2>
+
+        <div class="chart-container">
+          <canvas id="progressChart"></canvas>
+        </div>
+
+      </div>
+    `;
+
+    document.getElementById("content").innerHTML =
+      html;
+
+    // =====================================
+    // CHART
+    // =====================================
+    const labels =
+      bestEpisodes.map(x => x.episode);
+
+    const scores =
+      bestEpisodes.map(x => x.points);
+
+    const ctx =
+      document.getElementById("progressChart");
+
+    new Chart(ctx, {
+
+      type: "line",
+
+      data: {
+
+        labels: labels,
+
+        datasets: [{
+          label: "Best Score",
+          data: scores,
+          tension: 0.25
+        }]
+      },
+
+      options: {
+
+        responsive: true,
+        maintainAspectRatio: false
+      }
+    });
+
+  })
+
+  .catch(err => {
+
+    console.error(err);
+
+    document.getElementById("content").innerHTML =
+      "<h2>Failed to load player data.</h2>";
+  });
+
+</script>
+
+</body>
+</html>
