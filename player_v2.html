@@ -32,28 +32,6 @@ body {
 
 h1, h2 { margin-top: 0; }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-  min-width: 900px;
-  text-align: center;
-}
-
-th {
-  background: #222;
-  color: white;
-  padding: 14px;
-  text-align: center;
-}
-
-td {
-  padding: 12px 14px;
-  border-bottom: 1px solid #eee;
-  text-align: center;
-}
-
-tr:nth-child(even) { background: #fafafa; }
-
 .stats {
   display: grid;
   grid-template-columns: repeat(auto-fit,minmax(180px,1fr));
@@ -80,16 +58,31 @@ tr:nth-child(even) { background: #fafafa; }
 
 .table-wrap { overflow-x: auto; }
 
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 900px;
+  text-align: center;
+}
+
+th {
+  background: #222;
+  color: white;
+  padding: 14px;
+}
+
+td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #eee;
+}
+
+tr:nth-child(even) { background: #fafafa; }
+
 .points { font-weight: bold; }
 
-.comment {
-  font-style: italic;
-  color: #555;
-}
+.comment { font-style: italic; color: #555; }
 
-.chart-container {
-  height: 420px;
-}
+.chart-container { height: 420px; }
 
 .back-link {
   display:inline-block;
@@ -133,63 +126,60 @@ fetch(API_URL + "?player=" + encodeURIComponent(playerName))
 const p = data.player;
 
 if (!p) {
-document.getElementById("content").innerHTML = "<h2>Player not found</h2>";
-return;
+  document.getElementById("content").innerHTML = "<h2>Player not found</h2>";
+  return;
 }
 
-/* ============================
-   SAFE EPISODE SORT (CRITICAL FIX)
-   ============================ */
-const episodesSorted = [...p.episodes].sort((a,b) =>
-  Number(a.episode.toString().replace(/\D/g,'')) -
-  Number(b.episode.toString().replace(/\D/g,''))
+/* =========================
+   EPISODE SORT (SAFE)
+========================= */
+const episodesSorted = [...p.episodes].sort((a, b) =>
+  Number(a.episode.toString().replace(/\D/g, '')) -
+  Number(b.episode.toString().replace(/\D/g, ''))
 );
 
-/* ============================
-   EPISODE WINRATE FUNCTION (FIX)
-   ============================ */
+/* =========================
+   EPISODE WINRATE
+========================= */
 function getEpisodeWR(ep) {
-  const wins =
-    (ep.swissWins || 0) + (ep.topCutWins || 0);
-
-  const losses =
-    (ep.swissLosses || 0) + (ep.topCutLosses || 0);
-
+  const wins = (ep.swissWins || 0) + (ep.topCutWins || 0);
+  const losses = (ep.swissLosses || 0) + (ep.topCutLosses || 0);
   const total = wins + losses;
-
   return total ? ((wins / total) * 100).toFixed(1) : "0.0";
 }
 
-/* ============================
-   EPISODE BEST (FOR GRAPH)
-   ============================ */
-const episodeBestMap = {};
+/* =========================
+   BEST PER EPISODE (GRAPH)
+========================= */
+const episodeMap = {};
 
-episodesSorted.forEach(ep => {
+p.episodes.forEach(ep => {
   const key = ep.episode;
-
-  if (!episodeBestMap[key] || ep.points > episodeBestMap[key].points) {
-    episodeBestMap[key] = ep;
+  if (!episodeMap[key] || ep.points > episodeMap[key].points) {
+    episodeMap[key] = {
+      episode: ep.episode,
+      points: ep.points
+    };
   }
 });
 
-const bestEpisodes = Object.values(episodeBestMap).sort((a,b) =>
-  Number(a.episode.toString().replace(/\D/g,'')) -
-  Number(b.episode.toString().replace(/\D/g,''))
+const graphData = Object.values(episodeMap).sort((a, b) =>
+  Number(a.episode.toString().replace(/\D/g, '')) -
+  Number(b.episode.toString().replace(/\D/g, ''))
 );
 
-/* ============================
+/* =========================
    GLOBAL WINRATE
-   ============================ */
+========================= */
 const totalGames = (p.totalWins || 0) + (p.totalLosses || 0);
 const overallWR = totalGames ? ((p.totalWins / totalGames) * 100).toFixed(1) : "0.0";
 
 const swissGames = (p.totalSwissWins || 0) + (p.totalSwissLosses || 0);
 const swissWR = swissGames ? ((p.totalSwissWins / swissGames) * 100).toFixed(1) : "0.0";
 
-/* ============================
+/* =========================
    HEADER
-   ============================ */
+========================= */
 let html = `
 <div class="card">
 
@@ -221,9 +211,9 @@ let html = `
 </div>
 `;
 
-/* ============================
-   ADVANCED STATS
-   ============================ */
+/* =========================
+   PERFORMANCE
+========================= */
 html += `
 <div class="card">
 <h2>Performance Overview</h2>
@@ -249,9 +239,9 @@ html += `
 </div>
 `;
 
-/* ============================
+/* =========================
    MATCH RECORD
-   ============================ */
+========================= */
 html += `
 <div class="card">
 <h2>Match Record</h2>
@@ -282,9 +272,9 @@ html += `
 </div>
 `;
 
-/* ============================
+/* =========================
    TOP SCORES PER EPISODE
-   ============================ */
+========================= */
 html += `
 <div class="card">
 <h2>Top Scores Per Episode</h2>
@@ -303,12 +293,10 @@ html += `
 </tr>
 `;
 
-bestEpisodes.forEach(ep => {
+episodesSorted.forEach(ep => {
 
 const epSwissTotal = (ep.swissWins || 0) + (ep.swissLosses || 0);
-const epSwissWR = epSwissTotal
-  ? ((ep.swissWins / epSwissTotal) * 100).toFixed(1)
-  : "0.0";
+const epSwissWR = epSwissTotal ? ((ep.swissWins / epSwissTotal) * 100).toFixed(1) : "0.0";
 
 const epWR = getEpisodeWR(ep);
 
@@ -328,9 +316,9 @@ html += `
 
 html += `</table></div></div>`;
 
-/* ============================
-   FAVOURED DECKS (UNCHANGED STRUCTURE)
-   ============================ */
+/* =========================
+   FAVOURED DECKS
+========================= */
 const deckMap = {};
 
 p.episodes.forEach(ep => {
@@ -338,15 +326,15 @@ p.episodes.forEach(ep => {
 const d = ep.set || "Unknown";
 
 if (!deckMap[d]) {
-deckMap[d] = {
-deck: d,
-usage: 0,
-swissWins: 0,
-swissLosses: 0,
-topCuts: 0,
-tops: 0,
-points: 0
-};
+  deckMap[d] = {
+    deck: d,
+    usage: 0,
+    swissWins: 0,
+    swissLosses: 0,
+    topCuts: 0,
+    tops: 0,
+    points: 0
+  };
 }
 
 deckMap[d].usage++;
@@ -357,8 +345,7 @@ deckMap[d].points += ep.points;
 if (ep.placement == 1) deckMap[d].tops++;
 });
 
-const decks = Object.values(deckMap)
-  .sort((a, b) => b.usage - a.usage);
+const decks = Object.values(deckMap).sort((a, b) => b.usage - a.usage);
 
 html += `
 <div class="card">
@@ -383,10 +370,8 @@ decks.forEach(d => {
 const swissTotal = d.swissWins + d.swissLosses;
 const swissWRDeck = swissTotal ? ((d.swissWins / swissTotal) * 100).toFixed(1) : "0.0";
 
-/* FIX: overall WR per deck */
-const totalWins = d.swissWins + (d.topCuts || 0);
-const totalLosses = d.swissLosses;
-
+const totalWins = d.swissWins + d.topCuts;
+const totalLosses = d.swissLosses + d.topCuts;
 const overallTotal = totalWins + totalLosses;
 const overallWRDeck = overallTotal ? ((totalWins / overallTotal) * 100).toFixed(1) : "0.0";
 
@@ -406,9 +391,9 @@ html += `
 
 html += `</table></div></div>`;
 
-/* ============================
-   EPISODE HISTORY (FIXED ORDER)
-   ============================ */
+/* =========================
+   EPISODE HISTORY
+========================= */
 html += `
 <div class="card">
 <h2>Episode History</h2>
@@ -443,47 +428,38 @@ html += `
 
 html += `</table></div></div>`;
 
-/* ============================
-   GRAPH (BEST PER EPISODE ONLY)
-   ============================ */
+/* =========================
+   GRAPH
+========================= */
 
-/* Build clean best-per-episode map */
-const episodeMap = {};
+const ctx = document.getElementById("chart");
 
-  p.episodes.forEach(ep => {
-    const key = ep.episode;
+html += `
+<div class="card">
+<h2>Best Episode Progression</h2>
+<div class="chart-container">
+<canvas id="chart"></canvas>
+</div>
+</div>
+`;
 
-    if (!episodeMap[key] || ep.points > episodeMap[key].points) {
-      episodeMap[key] = {
-        episode: ep.episode,
-        points: ep.points
-      };
-    }
-  });
+document.getElementById("content").innerHTML = html;
 
-  const graphData = Object.values(episodeMap)
-    .sort((a, b) =>
-      Number(a.episode.toString().replace(/\D/g, '')) -
-      Number(b.episode.toString().replace(/\D/g, ''))
-    );
-
-  const ctx = document.getElementById("chart");
-
-  new Chart(ctx, {
-    type: "line",
-    data: {
-      labels: graphData.map(x => x.episode),
-      datasets: [{
-        label: "Best Episode Score",
-        data: graphData.map(x => x.points),
-        tension: 0.25
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false
-    }
-  });
+new Chart(ctx, {
+  type: "line",
+  data: {
+    labels: graphData.map(x => x.episode),
+    datasets: [{
+      label: "Best Episode Score",
+      data: graphData.map(x => x.points),
+      tension: 0.25
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false
+  }
+});
 
 })
 .catch(err => {
