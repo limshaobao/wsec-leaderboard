@@ -1,152 +1,265 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>Player Profile</title>
 
-<style>
-body {
-  font-family: Arial;
-  background: #f5f5f5;
-  padding: 20px;
-}
+  <meta charset="UTF-8">
+  <title>Player Profile</title>
 
-.wrap {
-  max-width: 900px;
-  margin: auto;
-  background: white;
-  padding: 20px;
-  border-radius: 12px;
-}
+  <style>
 
-.card {
-  padding: 12px;
-  margin-bottom: 10px;
-  border: 1px solid #eee;
-  border-radius: 8px;
-}
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f1e8;
+      margin: 0;
+      padding: 30px;
+      color: #222;
+    }
 
-h2 { margin-top: 0; }
+    .container {
+      max-width: 1100px;
+      margin: auto;
+    }
 
-.shop-title {
-  margin-top: 20px;
-  font-weight: bold;
-  background: #eee;
-  padding: 8px;
-}
+    .card {
+      background: white;
+      border-radius: 14px;
+      padding: 24px;
+      margin-bottom: 30px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
 
-.row {
-  padding: 6px 0;
-  border-bottom: 1px solid #f0f0f0;
-}
+    h1 {
+      margin-top: 0;
+      margin-bottom: 10px;
+    }
 
-.small {
-  color: #666;
-  font-size: 13px;
-}
-</style>
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit,minmax(180px,1fr));
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    .stat {
+      background: #f8f8f8;
+      border-radius: 10px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .stat-label {
+      font-size: 14px;
+      color: #666;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      overflow: hidden;
+      border-radius: 12px;
+    }
+
+    th {
+      background: #222;
+      color: white;
+      padding: 14px;
+      text-align: left;
+    }
+
+    td {
+      padding: 12px 14px;
+      border-bottom: 1px solid #eee;
+      vertical-align: top;
+    }
+
+    tr:nth-child(even) {
+      background: #fafafa;
+    }
+
+    tr:hover {
+      background: #f1f7ff;
+    }
+
+    .points {
+      font-weight: bold;
+    }
+
+    .comment {
+      font-style: italic;
+      color: #555;
+    }
+
+    .back-link {
+      display: inline-block;
+      margin-bottom: 20px;
+      text-decoration: none;
+      font-weight: bold;
+      color: #005bbb;
+    }
+
+  </style>
+
 </head>
 
 <body>
 
-<div class="wrap">
-  <h2 id="name">Loading...</h2>
+<div class="container">
 
-  <div id="summary"></div>
-  <div id="shops"></div>
-  <div id="episodes"></div>
+  <a class="back-link" href="./index.html">
+    ← Back to Leaderboard
+  </a>
+
+  <div id="content">
+    Loading player...
+  </div>
+
 </div>
 
 <script>
 
-const urlParams = new URLSearchParams(window.location.search);
-const playerName = urlParams.get("player");
+const API_URL =
+"https://script.google.com/macros/s/AKfycbzuWLCBe3q12dR8zlRYmUx0QWCutjMZvaUlnkb887jTMd_8pEdE1BN30fp5RUXPCFuA1Q/exec";
 
-fetch("https://script.google.com/macros/s/AKfycbzuWLCBe3q12dR8zlRYmUx0QWCutjMZvaUlnkb887jTMd_8pEdE1BN30fp5RUXPCFuA1Q/exec?player=" + encodeURIComponent(playerName))
-  .then(res => res.json())
+const params = new URLSearchParams(window.location.search);
+
+const playerName = params.get("player");
+
+if (!playerName) {
+  document.getElementById("content").innerHTML =
+    "<h2>No player specified.</h2>";
+}
+
+fetch(API_URL + "?player=" + encodeURIComponent(playerName))
+  .then(r => r.text())
+  .then(text => JSON.parse(text))
   .then(data => {
 
     const p = data.player;
 
     if (!p) {
-      document.getElementById("name").innerText = "Player not found";
+
+      document.getElementById("content").innerHTML =
+        "<h2>Player not found.</h2>";
+
       return;
     }
 
-    document.getElementById("name").innerText = p.player;
+    // sort newest/highest episodes first
+    p.episodes.sort((a, b) => {
+
+      if (a.episode !== b.episode) {
+        return a.episode.localeCompare(b.episode);
+      }
+
+      return b.points - a.points;
+    });
+
+    let html = "";
 
     // -------------------------
-    // SUMMARY CARD
+    // PROFILE CARD
     // -------------------------
-    document.getElementById("summary").innerHTML = `
+    html += `
       <div class="card">
-        <b>Global Rank:</b> ${p.globalRank}<br>
-        <b>Total Points:</b> ${p.totalPoints.toFixed(1)}<br>
-        <b>Best Score:</b> ${p.bestScore.toFixed(1)}<br>
-        <b>Episodes Played:</b> ${p.episodesPlayed}
+
+        <h1>${p.player}</h1>
+
+        <div class="stats">
+
+          <div class="stat">
+            <div class="stat-value">#${p.globalRank}</div>
+            <div class="stat-label">Global Rank</div>
+          </div>
+
+          <div class="stat">
+            <div class="stat-value">
+              ${p.totalPoints.toFixed(1)}
+            </div>
+            <div class="stat-label">Top 5 Points</div>
+          </div>
+
+          <div class="stat">
+            <div class="stat-value">
+              ${p.bestScore.toFixed(1)}
+            </div>
+            <div class="stat-label">Best Episode Score</div>
+          </div>
+
+          <div class="stat">
+            <div class="stat-value">
+              ${p.episodesPlayed}
+            </div>
+            <div class="stat-label">Episodes Played</div>
+          </div>
+
+        </div>
+
       </div>
     `;
 
     // -------------------------
-    // SHOP BREAKDOWN
+    // HISTORY TABLE
     // -------------------------
-    const shopTotals = {};
+    html += `
+      <div class="card">
 
-    p.episodes.forEach(e => {
-      if (!shopTotals[e.shop]) {
-        shopTotals[e.shop] = 0;
-      }
-      shopTotals[e.shop] += e.points;
-    });
+        <h2>Episode History</h2>
 
-    let shopHTML = `<div class="card"><h3>Shop Performance</h3>`;
+        <table>
 
-    Object.keys(shopTotals).forEach(shop => {
-      shopHTML += `
-        <div class="row">
-          ${shop}: ${shopTotals[shop].toFixed(1)} pts
-        </div>
+          <tr>
+            <th>Episode</th>
+            <th>Shop</th>
+            <th>Deck</th>
+            <th>Points</th>
+            <th>Comments</th>
+          </tr>
+    `;
+
+    p.episodes.forEach(ep => {
+
+      html += `
+        <tr>
+
+          <td>${ep.episode}</td>
+
+          <td>${ep.shop}</td>
+
+          <td>${ep.set || "-"}</td>
+
+          <td class="points">
+            ${Number(ep.points).toFixed(1)}
+          </td>
+
+          <td class="comment">
+            ${ep.comment || ""}
+          </td>
+
+        </tr>
       `;
     });
 
-    shopHTML += `</div>`;
+    html += `
+        </table>
+      </div>
+    `;
 
-    document.getElementById("shops").innerHTML = shopHTML;
+    document.getElementById("content").innerHTML = html;
 
-    // -------------------------
-    // EPISODE TIMELINE
-    // -------------------------
-    const grouped = {};
+  })
+  .catch(err => {
 
-    p.episodes.forEach(e => {
-      if (!grouped[e.shop]) grouped[e.shop] = [];
-      grouped[e.shop].push(e);
-    });
+    console.error(err);
 
-    let html = `<div class="card"><h3>Episode History</h3>`;
-
-    Object.keys(grouped).forEach(shop => {
-
-      html += `<div class="shop-title">${shop}</div>`;
-
-      grouped[shop].forEach(e => {
-
-        html += `
-          <div class="row">
-            <b>${e.episode}</b> —
-            Set: ${e.set || "-"} —
-            ${e.points.toFixed(1)} pts
-            <div class="small">
-              ${e.comment || ""}
-            </div>
-          </div>
-        `;
-      });
-    });
-
-    html += `</div>`;
-
-    document.getElementById("episodes").innerHTML = html;
+    document.getElementById("content").innerHTML =
+      "<h2>Failed to load player data.</h2>";
   });
 
 </script>
