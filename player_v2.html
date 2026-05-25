@@ -137,39 +137,59 @@ document.getElementById("content").innerHTML = "<h2>Player not found</h2>";
 return;
 }
 
-// =====================================
-// EPISODES (SORTED BY EPISODE NUMBER)
-// =====================================
+/* ============================
+   SAFE EPISODE SORT (CRITICAL FIX)
+   ============================ */
 const episodesSorted = [...p.episodes].sort((a,b) =>
-  Number(a.episode) - Number(b.episode)
+  Number(a.episode.toString().replace(/\D/g,'')) -
+  Number(b.episode.toString().replace(/\D/g,''))
 );
 
-// best per episode (for graph)
-const episodeBestMap = {};
-episodesSorted.forEach(ep => {
-const key = ep.episode;
-if (!episodeBestMap[key] || ep.points > episodeBestMap[key].points) {
-episodeBestMap[key] = ep;
-}
-});
-const bestEpisodes = Object.values(episodeBestMap);
+/* ============================
+   EPISODE WINRATE FUNCTION (FIX)
+   ============================ */
+function getEpisodeWR(ep) {
+  const wins =
+    (ep.swissWins || 0) + (ep.topCutWins || 0);
 
-// =====================================
-// WINRATE FIX (CORRECT SCOPES)
-// =====================================
+  const losses =
+    (ep.swissLosses || 0) + (ep.topCutLosses || 0);
+
+  const total = wins + losses;
+
+  return total ? ((wins / total) * 100).toFixed(1) : "0.0";
+}
+
+/* ============================
+   EPISODE BEST (FOR GRAPH)
+   ============================ */
+const episodeBestMap = {};
+
+episodesSorted.forEach(ep => {
+  const key = ep.episode;
+
+  if (!episodeBestMap[key] || ep.points > episodeBestMap[key].points) {
+    episodeBestMap[key] = ep;
+  }
+});
+
+const bestEpisodes = Object.values(episodeBestMap).sort((a,b) =>
+  Number(a.episode.toString().replace(/\D/g,'')) -
+  Number(b.episode.toString().replace(/\D/g,''))
+);
+
+/* ============================
+   GLOBAL WINRATE
+   ============================ */
 const totalGames = (p.totalWins || 0) + (p.totalLosses || 0);
-const overallWR = totalGames
-  ? ((p.totalWins / totalGames) * 100).toFixed(1)
-  : "0.0";
+const overallWR = totalGames ? ((p.totalWins / totalGames) * 100).toFixed(1) : "0.0";
 
 const swissGames = (p.totalSwissWins || 0) + (p.totalSwissLosses || 0);
-const swissWR = swissGames
-  ? ((p.totalSwissWins / swissGames) * 100).toFixed(1)
-  : "0.0";
+const swissWR = swissGames ? ((p.totalSwissWins / swissGames) * 100).toFixed(1) : "0.0";
 
-// =====================================
-// HEADER
-// =====================================
+/* ============================
+   HEADER
+   ============================ */
 let html = `
 <div class="card">
 
@@ -201,9 +221,9 @@ let html = `
 </div>
 `;
 
-// =====================================
-// ADVANCED STATS (FIXED)
-// =====================================
+/* ============================
+   ADVANCED STATS
+   ============================ */
 html += `
 <div class="card">
 <h2>Advanced Stats</h2>
@@ -216,22 +236,22 @@ html += `
 </div>
 
 <div class="stat">
-<div class="stat-value">${overallWR}%</div>
-<div class="stat-label">Winrate (Overall)</div>
+<div class="stat-value">${swissWR}%</div>
+<div class="stat-label">Swiss Winrate</div>
 </div>
 
 <div class="stat">
-<div class="stat-value">${swissWR}%</div>
-<div class="stat-label">Swiss Winrate</div>
+<div class="stat-value">${overallWR}%</div>
+<div class="stat-label">Overall Winrate</div>
 </div>
 
 </div>
 </div>
 `;
 
-// =====================================
-// MATCH RECORD (FIXED SAFETY)
-// =====================================
+/* ============================
+   MATCH RECORD
+   ============================ */
 html += `
 <div class="card">
 <h2>Match Record</h2>
@@ -262,9 +282,9 @@ html += `
 </div>
 `;
 
-// =====================================
-// TOP SCORES PER EPISODE (UNCHANGED LOGIC FIXED ORDER)
-// =====================================
+/* ============================
+   TOP SCORES PER EPISODE
+   ============================ */
 html += `
 <div class="card">
 <h2>Top Scores Per Episode</h2>
@@ -277,16 +297,20 @@ html += `
 <th>Position</th>
 <th>Deck</th>
 <th>Swiss Wins</th>
-<th>Winrate</th>
 <th>Swiss Winrate</th>
+<th>Overall Winrate</th>
 <th>Points</th>
 </tr>
 `;
 
 bestEpisodes.forEach(ep => {
 
-const epGames = (ep.swissWins || 0) + (ep.swissLosses || 0);
-const epWR = epGames ? ((ep.swissWins / epGames) * 100).toFixed(1) : "0.0";
+const epSwissTotal = (ep.swissWins || 0) + (ep.swissLosses || 0);
+const epSwissWR = epSwissTotal
+  ? ((ep.swissWins / epSwissTotal) * 100).toFixed(1)
+  : "0.0";
+
+const epWR = getEpisodeWR(ep);
 
 html += `
 <tr>
@@ -295,7 +319,7 @@ html += `
 <td>${ep.placement}</td>
 <td>${ep.set}</td>
 <td>${ep.swissWins}</td>
-<td>${overallWR}%</td>
+<td>${epSwissWR}%</td>
 <td>${epWR}%</td>
 <td class="points">${ep.points.toFixed(1)}</td>
 </tr>
@@ -304,9 +328,9 @@ html += `
 
 html += `</table></div></div>`;
 
-// =====================================
-// FAVOURED DECKS (FIXED COLUMNS)
-// =====================================
+/* ============================
+   FAVOURED DECKS (UNCHANGED STRUCTURE)
+   ============================ */
 const deckMap = {};
 
 p.episodes.forEach(ep => {
@@ -321,9 +345,7 @@ swissWins: 0,
 swissLosses: 0,
 topCuts: 0,
 tops: 0,
-points: 0,
-wins: 0,
-losses: 0
+points: 0
 };
 }
 
@@ -332,9 +354,6 @@ deckMap[d].swissWins += ep.swissWins;
 deckMap[d].swissLosses += ep.swissLosses;
 deckMap[d].topCuts += ep.topCutWins > 0 ? 1 : 0;
 deckMap[d].points += ep.points;
-deckMap[d].wins += ep.swissWins + ep.topCutWins;
-deckMap[d].losses += ep.swissLosses + ep.topCutLosses;
-
 if (ep.placement == 1) deckMap[d].tops++;
 });
 
@@ -351,7 +370,6 @@ html += `
 <th>Usage</th>
 <th>Swiss Wins</th>
 <th>Swiss Winrate</th>
-<th>Overall Winrate</th>
 <th>Top Cuts</th>
 <th>Tops</th>
 <th>Total Points</th>
@@ -363,17 +381,12 @@ decks.forEach(d => {
 const swissTotal = d.swissWins + d.swissLosses;
 const swissWRDeck = swissTotal ? ((d.swissWins / swissTotal) * 100).toFixed(1) : "0.0";
 
-const totalWRDeck = (d.wins + d.losses)
-  ? ((d.wins / (d.wins + d.losses)) * 100).toFixed(1)
-  : "0.0";
-
 html += `
 <tr>
 <td>${d.deck}</td>
 <td>${d.usage}</td>
 <td>${d.swissWins}</td>
 <td>${swissWRDeck}%</td>
-<td>${totalWRDeck}%</td>
 <td>${d.topCuts}</td>
 <td>${d.tops}</td>
 <td>${d.points.toFixed(1)}</td>
@@ -383,9 +396,9 @@ html += `
 
 html += `</table></div></div>`;
 
-// =====================================
-// EPISODE HISTORY (SORTED + CLEANED)
-// =====================================
+/* ============================
+   EPISODE HISTORY (FIXED ORDER)
+   ============================ */
 html += `
 <div class="card">
 <h2>Episode History</h2>
@@ -420,9 +433,9 @@ html += `
 
 html += `</table></div></div>`;
 
-// =====================================
-// GRAPH (FIXED ORDER)
-// =====================================
+/* ============================
+   GRAPH (STRICT CHRONOLOGICAL)
+   ============================ */
 html += `
 <div class="card">
 <h2>Best Episode Progression</h2>
