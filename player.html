@@ -1,148 +1,154 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Player Profile</title>
+<meta charset="UTF-8">
+<title>Player Profile</title>
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f5f5f5;
-    }
+<style>
+body {
+  font-family: Arial;
+  background: #f5f5f5;
+  padding: 20px;
+}
 
-    .wrap {
-      max-width: 700px;
-      margin: 40px auto;
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.08);
-    }
+.wrap {
+  max-width: 900px;
+  margin: auto;
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+}
 
-    h1 {
-      margin-bottom: 10px;
-    }
+.card {
+  padding: 12px;
+  margin-bottom: 10px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+}
 
-    .stat {
-      padding: 12px 0;
-      border-bottom: 1px solid #eee;
-      font-size: 16px;
-    }
+h2 { margin-top: 0; }
 
-    .back {
-      display: inline-block;
-      margin-top: 15px;
-      color: #1a73e8;
-      text-decoration: none;
-    }
+.shop-title {
+  margin-top: 20px;
+  font-weight: bold;
+  background: #eee;
+  padding: 8px;
+}
 
-    .back:hover {
-      text-decoration: underline;
-    }
+.row {
+  padding: 6px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
 
-    .badge {
-      display: inline-block;
-      padding: 4px 10px;
-      background: #eee;
-      border-radius: 6px;
-      font-size: 12px;
-      margin-left: 8px;
-    }
-  </style>
+.small {
+  color: #666;
+  font-size: 13px;
+}
+</style>
 </head>
 
 <body>
 
 <div class="wrap">
-  <h1 id="name">Loading...</h1>
+  <h2 id="name">Loading...</h2>
 
-  <div id="stats">Loading stats...</div>
-
-  <a class="back" href="./index.html">← Back to leaderboard</a>
+  <div id="summary"></div>
+  <div id="shops"></div>
+  <div id="episodes"></div>
 </div>
 
 <script>
-function getPlayer() {
-  const params = new URLSearchParams(window.location.search);
-  return params.get("player");
-}
 
-const player = getPlayer();
+const urlParams = new URLSearchParams(window.location.search);
+const playerName = urlParams.get("player");
 
-if (!player) {
-  document.getElementById("name").innerText = "No player selected";
-} else {
+fetch("https://script.google.com/macros/s/AKfycbzuWLCBe3q12dR8zlRYmUx0QWCutjMZvaUlnkb887jTMd_8pEdE1BN30fp5RUXPCFuA1Q/exec?player=" + encodeURIComponent(playerName))
+  .then(res => res.json())
+  .then(data => {
 
-  fetch("https://script.google.com/macros/s/AKfycbzuWLCBe3q12dR8zlRYmUx0QWCutjMZvaUlnkb887jTMd_8pEdE1BN30fp5RUXPCFuA1Q/exec?player=" + encodeURIComponent(player))
-    .then(res => res.json())
-    .then(data => {
+    const p = data.player;
 
-      const rows = data.best5_table;
+    if (!p) {
+      document.getElementById("name").innerText = "Player not found";
+      return;
+    }
 
-      document.getElementById("name").innerText = player;
+    document.getElementById("name").innerText = p.player;
 
-      if (!rows || rows.length === 0) {
-        document.getElementById("stats").innerHTML =
-          "<div class='stat'>No data found for this player.</div>";
-        return;
+    // -------------------------
+    // SUMMARY CARD
+    // -------------------------
+    document.getElementById("summary").innerHTML = `
+      <div class="card">
+        <b>Global Rank:</b> ${p.globalRank}<br>
+        <b>Total Points:</b> ${p.totalPoints.toFixed(1)}<br>
+        <b>Best Score:</b> ${p.bestScore.toFixed(1)}<br>
+        <b>Episodes Played:</b> ${p.episodesPlayed}
+      </div>
+    `;
+
+    // -------------------------
+    // SHOP BREAKDOWN
+    // -------------------------
+    const shopTotals = {};
+
+    p.episodes.forEach(e => {
+      if (!shopTotals[e.shop]) {
+        shopTotals[e.shop] = 0;
       }
+      shopTotals[e.shop] += e.points;
+    });
 
-      // ----------------------------
-      // CALCULATIONS
-      // ----------------------------
-      
-      let total = 0;
-      let best = 0;
-      
-      // track unique episodes properly
-      let episodeSet = new Set();
-      
-      rows.forEach(r => {
-      
-        const p = parseFloat(r.points);
-        const ep = r.episodes;
-      
-        if (!isNaN(p)) {
-          total += p;
-          if (p > best) best = p;
-        }
-      
-        if (ep !== undefined && ep !== null && ep !== "") {
-          episodeSet.add(ep);
-        }
-      });
-      
-      let episodes = episodeSet.size;
-      
-      let avg = episodes > 0 ? total / episodes : 0;
+    let shopHTML = `<div class="card"><h3>Shop Performance</h3>`;
 
-      // ----------------------------
-      // UI OUTPUT
-      // ----------------------------
-
-      document.getElementById("stats").innerHTML = `
-        <div class="stat">
-          <b>Total Points:</b> ${total.toFixed(2)}
-        </div>
-
-        <div class="stat">
-          <b>Episodes Played:</b> ${episodes}
-        </div>
-
-        <div class="stat">
-          <b>Best Score:</b> ${best.toFixed(2)}
-        </div>
-
-        <div class="stat">
-          <b>Average Score:</b> ${avg.toFixed(2)}
+    Object.keys(shopTotals).forEach(shop => {
+      shopHTML += `
+        <div class="row">
+          ${shop}: ${shopTotals[shop].toFixed(1)} pts
         </div>
       `;
-    })
-    .catch(err => {
-      document.getElementById("stats").innerHTML =
-        "<div class='stat'>Failed to load data.</div>";
     });
-}
+
+    shopHTML += `</div>`;
+
+    document.getElementById("shops").innerHTML = shopHTML;
+
+    // -------------------------
+    // EPISODE TIMELINE
+    // -------------------------
+    const grouped = {};
+
+    p.episodes.forEach(e => {
+      if (!grouped[e.shop]) grouped[e.shop] = [];
+      grouped[e.shop].push(e);
+    });
+
+    let html = `<div class="card"><h3>Episode History</h3>`;
+
+    Object.keys(grouped).forEach(shop => {
+
+      html += `<div class="shop-title">${shop}</div>`;
+
+      grouped[shop].forEach(e => {
+
+        html += `
+          <div class="row">
+            <b>${e.episode}</b> —
+            Set: ${e.set || "-"} —
+            ${e.points.toFixed(1)} pts
+            <div class="small">
+              ${e.comment || ""}
+            </div>
+          </div>
+        `;
+      });
+    });
+
+    html += `</div>`;
+
+    document.getElementById("episodes").innerHTML = html;
+  });
+
 </script>
 
 </body>
