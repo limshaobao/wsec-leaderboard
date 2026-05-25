@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>WSEC UK League Table</title>
@@ -8,36 +8,34 @@
     body {
       font-family: Arial, sans-serif;
       background: #f5f5f5;
+      margin: 0;
+      padding: 20px;
     }
 
     .wrap {
-      max-width: 900px;
-      margin: 30px auto;
+      max-width: 1000px;
+      margin: auto;
       background: white;
       padding: 20px;
       border-radius: 12px;
       box-shadow: 0 6px 18px rgba(0,0,0,0.08);
     }
 
-    h1 {
-      margin-bottom: 15px;
-    }
-
     table {
       width: 100%;
       border-collapse: collapse;
+      margin-top: 15px;
     }
 
     th {
       background: #111;
       color: white;
-      padding: 12px;
+      padding: 10px;
       text-align: left;
-      cursor: pointer;
     }
 
     td {
-      padding: 12px;
+      padding: 10px;
       border-bottom: 1px solid #eee;
     }
 
@@ -45,28 +43,19 @@
       background: #f6f6f6;
     }
 
-    .rank-1 {
-      background: linear-gradient(90deg, gold, #fff6cc);
-    }
-
-    .rank-top16 {
-      background: #dff5df;
-    }
-
     a {
-      color: #1a73e8;
       text-decoration: none;
-      font-weight: 600;
+      color: #1a73e8;
     }
 
     a:hover {
       text-decoration: underline;
     }
 
-    .subtext {
-      font-size: 12px;
-      color: #777;
-      margin-top: 4px;
+    select {
+      padding: 8px;
+      margin-bottom: 10px;
+      font-size: 14px;
     }
   </style>
 </head>
@@ -74,31 +63,59 @@
 <body>
 
 <div class="wrap">
+
   <h1>2026 WS European Championship - UK League Table</h1>
-  <div id="table">Loading...</div>
+
+  <div id="shopFilter"></div>
+  <div id="leaderboard">Loading...</div>
+
 </div>
 
 <script>
-let rows = [];
+let allPlayers = [];
+let shopData = {};
+let currentShop = "GLOBAL";
 
 fetch("https://script.google.com/macros/s/AKfycbzuWLCBe3q12dR8zlRYmUx0QWCutjMZvaUlnkb887jTMd_8pEdE1BN30fp5RUXPCFuA1Q/exec")
   .then(res => res.json())
   .then(data => {
 
-    rows = data.best5_table;
+    allPlayers = data.players;
+    shopData = data.shops;
 
-    // clean invalid data
-    rows = rows.filter(r =>
-      r.player &&
-      !isNaN(parseFloat(r.points))
-    );
-
-    render(rows);
+    renderLeaderboard();
+    buildShopDropdown();
   });
 
-function render(data) {
+function buildShopDropdown() {
+  const shops = Object.keys(shopData);
 
-  data.sort((a,b) => parseFloat(b.points) - parseFloat(a.points));
+  let html = `<select id="shopSelect" onchange="changeShop()">`;
+  html += `<option value="GLOBAL">Global Leaderboard</option>`;
+
+  shops.forEach(s => {
+    html += `<option value="${s}">${s}</option>`;
+  });
+
+  html += `</select>`;
+
+  document.getElementById("shopFilter").innerHTML = html;
+}
+
+function changeShop() {
+  currentShop = document.getElementById("shopSelect").value;
+  renderLeaderboard();
+}
+
+function renderLeaderboard() {
+
+  let list = [];
+
+  if (currentShop === "GLOBAL") {
+    list = allPlayers;
+  } else {
+    list = shopData[currentShop].leaderboard;
+  }
 
   let html = `
     <table>
@@ -106,39 +123,50 @@ function render(data) {
         <th>Rank</th>
         <th>Player</th>
         <th>Points</th>
-        <th>Episodes</th>
       </tr>
   `;
 
-  data.forEach((r, i) => {
+  list.forEach((p) => {
 
-    const points = parseFloat(r.points).toFixed(2);
-    const slug = r.player.toLowerCase().replace(/\s+/g,'-');
+    const rank = currentShop === "GLOBAL"
+      ? p.globalRank
+      : p.shopRank;
 
-    let cls = "";
-    if (i === 0) cls = "rank-1";
-    else if (i < 16) cls = "rank-top16";
+    const points = p.totalPoints.toFixed(1);
+
+    let style = "";
+
+    // 🥇 GLOBAL #1
+    if (currentShop === "GLOBAL" && rank === 1) {
+      style = "background:#ffd700; font-weight:bold;";
+    }
+
+    // 🟩 SHOP WINNERS
+    if (currentShop !== "GLOBAL" && rank === 1) {
+      style = "background:#b6fcb6; font-weight:bold;";
+    }
+
+    // 🟨 TOP 16 GLOBAL
+    if (currentShop === "GLOBAL" && rank >= 2 && rank <= 17) {
+      style = "background:#fff3a6;";
+    }
 
     html += `
-      <tr class="${cls}">
-        <td>${i+1}</td>
-
+      <tr style="${style}">
+        <td>${rank}</td>
         <td>
-        <a href="https://limshaobao.github.io/wsec-leaderboard/player.html?player=${encodeURIComponent(r.player)}">
-            ${r.player}
+          <a href="./player.html?player=${encodeURIComponent(p.player)}">
+            ${p.player}
           </a>
-          <div class="subtext">View profile</div>
         </td>
-
         <td>${points}</td>
-        <td>${r.episodes}</td>
       </tr>
     `;
   });
 
-  html += "</table>";
+  html += `</table>`;
 
-  document.getElementById("table").innerHTML = html;
+  document.getElementById("leaderboard").innerHTML = html;
 }
 </script>
 
