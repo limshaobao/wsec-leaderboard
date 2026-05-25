@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+  <meta charset="UTF-8">
+  <title>WSEC Shop Page</title>
+
+  <style>
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f1e8;
+      margin: 0;
+      padding: 30px;
+      color: #222;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: auto;
+    }
+
+    .card {
+      background: white;
+      border-radius: 14px;
+      padding: 24px;
+      margin-bottom: 30px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+
+    h1, h2, h3 {
+      margin-top: 0;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit,minmax(180px,1fr));
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    .stat {
+      background: #f8f8f8;
+      border-radius: 10px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .stat-label {
+      font-size: 14px;
+      color: #666;
+    }
+
+    .winner-card {
+      text-align: center;
+      background: #b6fcb6;
+    }
+
+    .winner-name {
+      font-size: 36px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .winner-sub {
+      font-size: 18px;
+      color: #333;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      background: white;
+      overflow: hidden;
+      border-radius: 12px;
+    }
+
+    th {
+      background: #111;
+      color: white;
+      padding: 12px;
+      text-align: left;
+    }
+
+    td {
+      padding: 12px;
+      border-bottom: 1px solid #eee;
+      vertical-align: top;
+    }
+
+    tr:nth-child(even) {
+      background: #fafafa;
+    }
+
+    tr:hover {
+      background: #f1f7ff;
+    }
+
+    .center-table th,
+    .center-table td {
+      text-align: center;
+    }
+
+    .points {
+      font-weight: bold;
+    }
+
+    .comment {
+      font-style: italic;
+      color: #555;
+    }
+
+    .episode-block {
+      margin-bottom: 40px;
+    }
+
+    .back-link {
+      display: inline-block;
+      margin-bottom: 20px;
+      text-decoration: none;
+      font-weight: bold;
+      color: #005bbb;
+    }
+
+    .gold {
+      background: #ffd700 !important;
+      font-weight: bold;
+    }
+
+    .green {
+      background: #b6fcb6 !important;
+      font-weight: bold;
+    }
+
+    .yellow {
+      background: #fff3cd !important;
+      font-weight: bold;
+    }
+
+  </style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+  <a class="back-link" href="./index.html">
+    ← Back to Leaderboard
+  </a>
+
+  <div id="content">
+    Loading shop...
+  </div>
+
+</div>
+
+<script>
+
+const API_URL =
+"https://script.google.com/macros/s/AKfycbzuWLCBe3q12dR8zlRYmUx0QWCutjMZvaUlnkb887jTMd_8pEdE1BN30fp5RUXPCFuA1Q/exec";
+
+const params = new URLSearchParams(window.location.search);
+
+const shopName = params.get("shop");
+
+if (!shopName) {
+
+  document.getElementById("content").innerHTML =
+    "<h2>No shop specified.</h2>";
+}
+
+fetch(API_URL)
+  .then(r => r.text())
+  .then(text => JSON.parse(text))
+  .then(data => {
+
+    const shop = data.shops[shopName];
+
+    if (!shop) {
+
+      document.getElementById("content").innerHTML =
+        "<h2>Shop not found.</h2>";
+
+      return;
+    }
+
+    // ---------------------------------
+    // ALL EPISODES FOR THIS SHOP
+    // ---------------------------------
+    const allEpisodes = [];
+
+    data.players.forEach(player => {
+
+      player.episodes.forEach(ep => {
+
+        if (ep.shop === shopName) {
+
+          allEpisodes.push({
+            player: player.player,
+            globalRank: player.globalRank,
+            ...ep
+          });
+        }
+      });
+    });
+
+    // ---------------------------------
+    // HEADER STATS
+    // ---------------------------------
+    const uniqueEpisodes = [
+      ...new Set(allEpisodes.map(e => e.episode))
+    ];
+
+    const uniquePlayers = [
+      ...new Set(allEpisodes.map(e => e.player))
+    ];
+
+    const avgPoints =
+      allEpisodes.reduce((a,b)=>a+b.points,0)
+      / (allEpisodes.length || 1);
+
+    const highestPoints =
+      Math.max(...allEpisodes.map(e => e.points));
+
+    // highest attendance
+    let highestAttendance = 0;
+
+    uniqueEpisodes.forEach(ep => {
+
+      const count =
+        allEpisodes.filter(x => x.episode === ep).length;
+
+      highestAttendance =
+        Math.max(highestAttendance, count);
+    });
+
+    // ---------------------------------
+    // LEADING PLAYER
+    // ---------------------------------
+    const leader =
+      shop.leaderboard.find(
+        p => p.player === shop.finalWinner
+      );
+
+    // ---------------------------------
+    // DECK META
+    // ---------------------------------
+    const deckMap = {};
+
+    allEpisodes.forEach(ep => {
+
+      const deck = ep.set || "Unknown";
+
+      if (!deckMap[deck]) {
+
+        deckMap[deck] = {
+          deck,
+          usage: 0,
+          swissWins: 0,
+          points: 0
+        };
+      }
+
+      deckMap[deck].usage += 1;
+
+      deckMap[deck].swissWins +=
+        Number(ep.swissWins || 0);
+
+      deckMap[deck].points +=
+        Number(ep.points || 0);
+    });
+
+    const deckList =
+      Object.values(deckMap)
+        .sort((a,b)=>b.usage-a.usage);
+
+    // ---------------------------------
+    // HTML START
+    // ---------------------------------
+    let html = "";
+
+    // =================================
+    // HEADER CARD
+    // =================================
+    html += `
+      <div class="card">
+
+        <h1>${shopName}</h1>
+
+        <div class="stats">
+
+          <div class="stat">
+            <div class="stat-value">
+              ${uniqueEpisodes.length}
+            </div>
+            <div class="stat-label">
+              Episodes Hosted
+            </div>
+          </div>
+
+          <div class="stat">
+            <div class="stat-value">
+              ${uniquePlayers.length}
+            </div>
+            <div class="stat-label">
+              Total Registered Players
+            </div>
+          </div>
+
+          <div class="stat">
+            <div class="stat-value">
+              ${highestAttendance}
+            </div>
+            <div class="stat-label">
+              Highest Number of Players
+            </div>
+          </div>
+
+          <div class="stat">
+            <div class="stat-value">
+              ${avgPoints.toFixed(1)}
+            </div>
+            <div class="stat-label">
+              Avg Points
+            </div>
+          </div>
+
+          <div class="stat">
+            <div class="stat-value">
+              ${highestPoints.toFixed(1)}
+            </div>
+            <div class="stat-label">
+              Highest Points Obtained
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    `;
+
+    // =================================
+    // LEADING PLAYER
+    // =================================
+    if (leader) {
+
+      html += `
+        <div class="card winner-card">
+
+          <div class="winner-name">
+            ${leader.player}
+          </div>
+
+          <div class="winner-sub">
+            Leading Player
+          </div>
+
+          <br>
+
+          <div>
+            Shop Rank #${leader.shopRank}
+          </div>
+
+          <div>
+            ${leader.totalPoints.toFixed(1)} Points
+          </div>
+
+        </div>
+      `;
+    }
+
+    // =================================
+    // MAIN SHOP LEADERBOARD
+    // =================================
+    html += `
+      <div class="card">
+
+        <h2>Shop Leaderboard</h2>
+
+        <table>
+
+          <tr>
+            <th>Rank</th>
+            <th>Player</th>
+            <th>Episodes</th>
+            <th>Best Score</th>
+            <th>Total Points</th>
+          </tr>
+    `;
+
+    shop.leaderboard.forEach(p => {
+
+      let rowClass = "";
+
+      if (p.player === shop.finalWinner) {
+
+        rowClass = "green";
+
+      } else if (
+        p.shopRank === 1 &&
+        p.player !== shop.finalWinner
+      ) {
+
+        rowClass = "yellow";
+      }
+
+      html += `
+        <tr class="${rowClass}">
+
+          <td>${p.shopRank}</td>
+
+          <td>
+
+            <a href="./player.html?player=${encodeURIComponent(p.player)}">
+
+              ${p.player}
+
+            </a>
+
+          </td>
+
+          <td>${p.episodesPlayed}</td>
+
+          <td>
+            ${Number(p.bestScore).toFixed(1)}
+          </td>
+
+          <td>
+            ${Number(p.totalPoints).toFixed(1)}
+          </td>
+
+        </tr>
+      `;
+    });
+
+    html += `
+        </table>
+
+      </div>
+    `;
+
+    // =================================
+    // DECK META TABLE
+    // =================================
+    html += `
+      <div class="card">
+
+        <h2>Deck Meta</h2>
+
+        <table class="center-table">
+
+          <tr>
+            <th>Deck</th>
+            <th>Usage</th>
+            <th>Total Swiss Wins</th>
+            <th>Total Points</th>
+          </tr>
+    `;
+
+    deckList.forEach(d => {
+
+      html += `
+        <tr>
+
+          <td>${d.deck}</td>
+
+          <td>${d.usage}</td>
+
+          <td>${d.swissWins}</td>
+
+          <td>
+            ${d.points.toFixed(1)}
+          </td>
+
+        </tr>
+      `;
+    });
+
+    html += `
+        </table>
+
+      </div>
+    `;
+
+    // =================================
+    // DETAILED EPISODE BREAKDOWN
+    // =================================
+    html += `
+      <div class="card">
+
+        <h2>Detailed Episode Breakdown</h2>
+    `;
+
+    uniqueEpisodes.sort();
+
+    uniqueEpisodes.forEach(epName => {
+
+      const rows = allEpisodes
+        .filter(x => x.episode === epName)
+        .sort((a,b)=>b.points-a.points);
+
+      html += `
+        <div class="episode-block">
+
+          <h3>${epName}</h3>
+
+          <table>
+
+            <tr>
+              <th>Position</th>
+              <th>Player</th>
+              <th>Deck</th>
+              <th>Swiss Wins</th>
+              <th>Points</th>
+              <th>Comments</th>
+            </tr>
+      `;
+
+      rows.forEach((r, index) => {
+
+        html += `
+          <tr>
+
+            <td>${index + 1}</td>
+
+            <td>
+
+              <a href="./player.html?player=${encodeURIComponent(r.player)}">
+
+                ${r.player}
+
+              </a>
+
+            </td>
+
+            <td>${r.set || "-"}</td>
+
+            <td>${r.swissWins ?? "-"}</td>
+
+            <td>
+              ${Number(r.points).toFixed(1)}
+            </td>
+
+            <td class="comment">
+              ${r.comment || ""}
+            </td>
+
+          </tr>
+        `;
+      });
+
+      html += `
+          </table>
+
+        </div>
+      `;
+    });
+
+    html += `</div>`;
+
+    document.getElementById("content").innerHTML =
+      html;
+  })
+
+  .catch(err => {
+
+    console.error(err);
+
+    document.getElementById("content").innerHTML =
+      "<h2>Failed to load shop data.</h2>";
+  });
+
+</script>
+
+</body>
+</html>
