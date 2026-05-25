@@ -67,8 +67,6 @@
       width: 100%;
       border-collapse: collapse;
       background: white;
-      overflow: hidden;
-      border-radius: 12px;
       min-width: 900px;
     }
 
@@ -87,17 +85,10 @@
       white-space: nowrap;
     }
 
-    tr:nth-child(even) {
-      background: #fafafa;
-    }
+    tr:nth-child(even) { background: #fafafa; }
+    tr:hover { background: #f1f7ff; }
 
-    tr:hover {
-      background: #f1f7ff;
-    }
-
-    .points {
-      font-weight: bold;
-    }
+    .points { font-weight: bold; }
 
     .comment {
       font-style: italic;
@@ -114,11 +105,6 @@
       color: #005bbb;
     }
 
-    .center-table th,
-    .center-table td {
-      text-align: center;
-    }
-
     .chart-container {
       position: relative;
       width: 100%;
@@ -126,28 +112,11 @@
     }
 
     @media (max-width: 768px) {
-
-      body {
-        padding: 14px;
-      }
-
-      .card {
-        padding: 18px;
-      }
-
-      th,
-      td {
-        padding: 10px;
-        font-size: 14px;
-      }
-
-      .stat-value {
-        font-size: 22px;
-      }
-
-      .chart-container {
-        height: 320px;
-      }
+      body { padding: 14px; }
+      .card { padding: 18px; }
+      th, td { padding: 10px; font-size: 14px; }
+      .stat-value { font-size: 22px; }
+      .chart-container { height: 320px; }
     }
 
   </style>
@@ -158,13 +127,9 @@
 
 <div class="container">
 
-  <a class="back-link" href="./index.html">
-    ← Back to Leaderboard
-  </a>
+  <a class="back-link" href="./index.html">← Back to Leaderboard</a>
 
-  <div id="content">
-    Loading player...
-  </div>
+  <div id="content">Loading player...</div>
 
 </div>
 
@@ -174,41 +139,30 @@ const API_URL =
 "https://script.google.com/macros/s/AKfycbzuWLCBe3q12dR8zlRYmUx0QWCutjMZvaUlnkb887jTMd_8pEdE1BN30fp5RUXPCFuA1Q/exec";
 
 const params = new URLSearchParams(window.location.search);
-
 const playerName = params.get("player");
 
 if (!playerName) {
-
-  document.getElementById("content").innerHTML =
-    "<h2>No player specified.</h2>";
+  document.getElementById("content").innerHTML = "<h2>No player specified.</h2>";
 }
 
 fetch(API_URL + "?player=" + encodeURIComponent(playerName))
-
   .then(r => r.text())
   .then(text => JSON.parse(text))
-
   .then(data => {
 
     const p = data.player;
 
     if (!p) {
-
-      document.getElementById("content").innerHTML =
-        "<h2>Player not found.</h2>";
-
+      document.getElementById("content").innerHTML = "<h2>Player not found.</h2>";
       return;
     }
 
     // =====================================
-    // SORT HISTORY
+    // SORT EPISODES
     // =====================================
     p.episodes.sort((a, b) => {
-
-      if (a.episode !== b.episode) {
+      if (a.episode !== b.episode)
         return a.episode.localeCompare(b.episode);
-      }
-
       return b.points - a.points;
     });
 
@@ -225,118 +179,62 @@ fetch(API_URL + "?player=" + encodeURIComponent(playerName))
         <div class="stats">
 
           <div class="stat">
-            <div class="stat-value">
-              #${p.globalRank}
-            </div>
-            <div class="stat-label">
-              Global Rank
-            </div>
+            <div class="stat-value">#${p.globalRank}</div>
+            <div class="stat-label">Global Rank</div>
           </div>
 
           <div class="stat">
-            <div class="stat-value">
-              ${p.totalPoints.toFixed(1)}
-            </div>
-            <div class="stat-label">
-              Top 5 Points
-            </div>
+            <div class="stat-value">${p.totalPoints.toFixed(1)}</div>
+            <div class="stat-label">Top 5 Points</div>
           </div>
 
           <div class="stat">
-            <div class="stat-value">
-              ${p.bestScore.toFixed(1)}
-            </div>
-            <div class="stat-label">
-              Best Episode Score
-            </div>
+            <div class="stat-value">${p.bestScore.toFixed(1)}</div>
+            <div class="stat-label">Best Episode Score</div>
           </div>
 
           <div class="stat">
-            <div class="stat-value">
-              ${p.episodesPlayed}
-            </div>
-            <div class="stat-label">
-              Episodes Played
-            </div>
+            <div class="stat-value">${p.episodesPlayed}</div>
+            <div class="stat-label">Episodes Played</div>
           </div>
 
         </div>
-
       </div>
     `;
 
     // =====================================
-    // ADVANCED STATS
+    // ADVANCED STATS (FROM BACKEND ONLY)
     // =====================================
-    const tops =
-      p.episodes.filter(x => Number(x.placement) === 1).length;
-
-    const topCuts =
-      p.episodes.filter(x => Number(x.topCutRounds || 0) > 0).length;
-
-    const totalWins =
-      p.episodes.reduce((s,x)=>s+Number(x.matchWins || 0),0);
-
-    const totalLosses =
-      p.episodes.reduce((s,x)=>s+Number(x.matchLosses || 0),0);
-
-    const swissWins =
-      p.episodes.reduce((s,x)=>s+Number(x.swissWins || 0),0);
-
-    const swissRounds =
-      p.episodes.reduce((s,x)=>s+Number(x.swissRounds || 0),0);
-
-    const overallWinrate =
-      (totalWins + totalLosses) > 0
-      ? ((totalWins / (totalWins + totalLosses)) * 100)
-      : 0;
-
-    const swissWinrate =
-      swissRounds > 0
-      ? ((swissWins / swissRounds) * 100)
-      : 0;
-
     html += `
       <div class="card">
 
-        <h2>Advanced Stats</h2>
+        <h2>Performance Overview</h2>
 
         <div class="stats">
 
           <div class="stat">
-            <div class="stat-value">
-              ${tops}
-            </div>
-            <div class="stat-label">
-              Tops
-            </div>
+            <div class="stat-value">${p.tops}</div>
+            <div class="stat-label">Tops</div>
           </div>
 
           <div class="stat">
-            <div class="stat-value">
-              ${topCuts}
-            </div>
-            <div class="stat-label">
-              Top Cuts
-            </div>
+            <div class="stat-value">${p.topCuts}</div>
+            <div class="stat-label">Top Cuts</div>
           </div>
 
           <div class="stat">
-            <div class="stat-value">
-              ${overallWinrate.toFixed(1)}%
-            </div>
-            <div class="stat-label">
-              Winrate
-            </div>
+            <div class="stat-value">${p.overallWinRate}%</div>
+            <div class="stat-label">Overall Winrate</div>
           </div>
 
           <div class="stat">
-            <div class="stat-value">
-              ${swissWinrate.toFixed(1)}%
-            </div>
-            <div class="stat-label">
-              Swiss Winrate
-            </div>
+            <div class="stat-value">${p.swissWinRate}%</div>
+            <div class="stat-label">Swiss Winrate</div>
+          </div>
+
+          <div class="stat">
+            <div class="stat-value">${p.topCutWinRate}%</div>
+            <div class="stat-label">Top Cut Winrate</div>
           </div>
 
         </div>
@@ -347,6 +245,10 @@ fetch(API_URL + "?player=" + encodeURIComponent(playerName))
     // =====================================
     // MATCH RECORD
     // =====================================
+    const totalMatches =
+      p.swissWins + (p.swissRounds - p.swissWins) +
+      p.topCutWins + p.topCutLosses;
+
     html += `
       <div class="card">
 
@@ -355,39 +257,23 @@ fetch(API_URL + "?player=" + encodeURIComponent(playerName))
         <div class="stats">
 
           <div class="stat">
-            <div class="stat-value">
-              ${totalWins}
-            </div>
-            <div class="stat-label">
-              Match Wins
-            </div>
+            <div class="stat-value">${p.swissWins}</div>
+            <div class="stat-label">Swiss Wins</div>
           </div>
 
           <div class="stat">
-            <div class="stat-value">
-              ${totalLosses}
-            </div>
-            <div class="stat-label">
-              Match Losses
-            </div>
+            <div class="stat-value">${p.swissRounds - p.swissWins}</div>
+            <div class="stat-label">Swiss Losses</div>
           </div>
 
           <div class="stat">
-            <div class="stat-value">
-              ${swissWins}
-            </div>
-            <div class="stat-label">
-              Swiss Wins
-            </div>
+            <div class="stat-value">${p.topCutWins}</div>
+            <div class="stat-label">Top Cut Wins</div>
           </div>
 
           <div class="stat">
-            <div class="stat-value">
-              ${swissRounds}
-            </div>
-            <div class="stat-label">
-              Swiss Rounds Played
-            </div>
+            <div class="stat-value">${p.topCutLosses}</div>
+            <div class="stat-label">Top Cut Losses</div>
           </div>
 
         </div>
@@ -401,18 +287,15 @@ fetch(API_URL + "?player=" + encodeURIComponent(playerName))
     const episodeBestMap = {};
 
     p.episodes.forEach(ep => {
-
-      if (
-        !episodeBestMap[ep.episode] ||
-        ep.points > episodeBestMap[ep.episode].points
-      ) {
-        episodeBestMap[ep.episode] = { ...ep };
+      const key = ep.episode;
+      if (!episodeBestMap[key] || ep.points > episodeBestMap[key].points) {
+        episodeBestMap[key] = { ...ep };
       }
     });
 
     const bestEpisodes =
       Object.values(episodeBestMap)
-      .sort((a,b)=>b.points-a.points);
+        .sort((a,b)=>b.points-a.points);
 
     html += `
       <div class="card">
@@ -429,23 +312,12 @@ fetch(API_URL + "?player=" + encodeURIComponent(playerName))
             <th>Position</th>
             <th>Deck</th>
             <th>Swiss Wins</th>
-            <th>Winrate</th>
-            <th>Swiss Winrate</th>
+            <th>Top Cut Wins</th>
             <th>Points</th>
           </tr>
     `;
 
     bestEpisodes.forEach(ep => {
-
-      const wr =
-        ep.matchWins + ep.matchLosses > 0
-        ? ((ep.matchWins / (ep.matchWins + ep.matchLosses)) * 100)
-        : 0;
-
-      const swr =
-        ep.swissRounds > 0
-        ? ((ep.swissWins / ep.swissRounds) * 100)
-        : 0;
 
       html += `
         <tr>
@@ -464,13 +336,9 @@ fetch(API_URL + "?player=" + encodeURIComponent(playerName))
 
           <td>${ep.swissWins}</td>
 
-          <td>${wr.toFixed(1)}%</td>
+          <td>${ep.topCutWins}</td>
 
-          <td>${swr.toFixed(1)}%</td>
-
-          <td class="points">
-            ${Number(ep.points).toFixed(1)}
-          </td>
+          <td class="points">${Number(ep.points).toFixed(1)}</td>
 
         </tr>
       `;
@@ -485,7 +353,7 @@ fetch(API_URL + "?player=" + encodeURIComponent(playerName))
     `;
 
     // =====================================
-    // FAVOURED DECKS
+    // DECKS
     // =====================================
     const deckMap = {};
 
@@ -494,40 +362,22 @@ fetch(API_URL + "?player=" + encodeURIComponent(playerName))
       const deck = ep.set || "Unknown";
 
       if (!deckMap[deck]) {
-
         deckMap[deck] = {
           deck,
           usage: 0,
           swissWins: 0,
-          swissRounds: 0,
-          wins: 0,
-          losses: 0,
-          tops: 0,
-          topCuts: 0,
+          topCutWins: 0,
           points: 0
         };
       }
 
-      const d = deckMap[deck];
-
-      d.usage += 1;
-      d.swissWins += Number(ep.swissWins || 0);
-      d.swissRounds += Number(ep.swissRounds || 0);
-      d.wins += Number(ep.matchWins || 0);
-      d.losses += Number(ep.matchLosses || 0);
-      d.points += Number(ep.points || 0);
-
-      if (Number(ep.placement) === 1) {
-        d.tops += 1;
-      }
-
-      if (Number(ep.topCutRounds || 0) > 0) {
-        d.topCuts += 1;
-      }
+      deckMap[deck].usage += 1;
+      deckMap[deck].swissWins += ep.swissWins;
+      deckMap[deck].topCutWins += ep.topCutWins;
+      deckMap[deck].points += ep.points;
     });
 
-    const decks =
-      Object.values(deckMap)
+    const decks = Object.values(deckMap)
       .sort((a,b)=>b.points-a.points);
 
     html += `
@@ -537,50 +387,27 @@ fetch(API_URL + "?player=" + encodeURIComponent(playerName))
 
         <div class="table-wrap">
 
-        <table class="center-table">
+        <table>
 
           <tr>
             <th>Deck</th>
             <th>Usage</th>
-            <th>Total Swiss Wins</th>
-            <th>Winrate</th>
-            <th>Swiss Winrate</th>
-            <th>Tops</th>
-            <th>Top Cuts</th>
-            <th>Total Points</th>
+            <th>Swiss Wins</th>
+            <th>Top Cut Wins</th>
+            <th>Points</th>
           </tr>
     `;
 
     decks.forEach(d => {
 
-      const wr =
-        d.wins + d.losses > 0
-        ? ((d.wins / (d.wins + d.losses)) * 100)
-        : 0;
-
-      const swr =
-        d.swissRounds > 0
-        ? ((d.swissWins / d.swissRounds) * 100)
-        : 0;
-
       html += `
         <tr>
 
           <td>${d.deck}</td>
-
           <td>${d.usage}</td>
-
           <td>${d.swissWins}</td>
-
-          <td>${wr.toFixed(1)}%</td>
-
-          <td>${swr.toFixed(1)}%</td>
-
-          <td>${d.tops}</td>
-
-          <td>${d.topCuts}</td>
-
-          <td>${d.points.toFixed(1)}</td>
+          <td>${d.topCutWins}</td>
+          <td class="points">${d.points.toFixed(1)}</td>
 
         </tr>
       `;
@@ -612,24 +439,13 @@ fetch(API_URL + "?player=" + encodeURIComponent(playerName))
             <th>Position</th>
             <th>Deck</th>
             <th>Swiss Wins</th>
-            <th>Winrate</th>
-            <th>Swiss Winrate</th>
+            <th>Top Cut Wins</th>
             <th>Points</th>
             <th>Comments</th>
           </tr>
     `;
 
     p.episodes.forEach(ep => {
-
-      const wr =
-        ep.matchWins + ep.matchLosses > 0
-        ? ((ep.matchWins / (ep.matchWins + ep.matchLosses)) * 100)
-        : 0;
-
-      const swr =
-        ep.swissRounds > 0
-        ? ((ep.swissWins / ep.swissRounds) * 100)
-        : 0;
 
       html += `
         <tr>
@@ -648,17 +464,11 @@ fetch(API_URL + "?player=" + encodeURIComponent(playerName))
 
           <td>${ep.swissWins}</td>
 
-          <td>${wr.toFixed(1)}%</td>
+          <td>${ep.topCutWins}</td>
 
-          <td>${swr.toFixed(1)}%</td>
+          <td class="points">${Number(ep.points).toFixed(1)}</td>
 
-          <td class="points">
-            ${Number(ep.points).toFixed(1)}
-          </td>
-
-          <td class="comment">
-            ${ep.comment || ""}
-          </td>
+          <td class="comment">${ep.comment || ""}</td>
 
         </tr>
       `;
@@ -673,7 +483,7 @@ fetch(API_URL + "?player=" + encodeURIComponent(playerName))
     `;
 
     // =====================================
-    // PROGRESSION GRAPH
+    // CHART
     // =====================================
     html += `
       <div class="card">
@@ -687,49 +497,30 @@ fetch(API_URL + "?player=" + encodeURIComponent(playerName))
       </div>
     `;
 
-    document.getElementById("content").innerHTML =
-      html;
+    document.getElementById("content").innerHTML = html;
 
-    // =====================================
-    // CHART
-    // =====================================
-    const labels =
-      bestEpisodes.map(x => x.episode);
+    const labels = bestEpisodes.map(x => x.episode);
+    const scores = bestEpisodes.map(x => x.points);
 
-    const scores =
-      bestEpisodes.map(x => x.points);
-
-    const ctx =
-      document.getElementById("progressChart");
-
-    new Chart(ctx, {
-
+    new Chart(document.getElementById("progressChart"), {
       type: "line",
-
       data: {
-
-        labels: labels,
-
+        labels,
         datasets: [{
           label: "Best Score",
           data: scores,
           tension: 0.25
         }]
       },
-
       options: {
-
         responsive: true,
         maintainAspectRatio: false
       }
     });
 
   })
-
   .catch(err => {
-
     console.error(err);
-
     document.getElementById("content").innerHTML =
       "<h2>Failed to load player data.</h2>";
   });
