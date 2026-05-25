@@ -156,7 +156,7 @@ fetch(API_URL + "?player=" + encodeURIComponent(playerName))
       return;
     }
 
-    // sort newest/highest episodes first
+    // sort episodes
     p.episodes.sort((a, b) => {
 
       if (a.episode !== b.episode) {
@@ -208,7 +208,61 @@ fetch(API_URL + "?player=" + encodeURIComponent(playerName))
 
       </div>
     `;
-    
+
+    // -------------------------
+    // NEW: BEST EPISODE SCORES (TOP 5 BASIS)
+    // -------------------------
+
+    const bestEpisodes = [...p.episodes]
+      .sort((a, b) => b.points - a.points);
+
+    html += `
+      <div class="card">
+
+        <h2>Top Scores Per Episode</h2>
+
+        <table>
+
+          <tr>
+            <th>Episode</th>
+            <th>Shop</th>
+            <th>Deck</th>
+            <th>Swiss Wins</th>
+            <th>Points</th>
+          </tr>
+    `;
+
+    bestEpisodes.forEach(ep => {
+
+      html += `
+        <tr>
+
+          <td>${ep.episode}</td>
+
+          <td>
+            <a href="./shop.html?shop=${encodeURIComponent(ep.shop)}">
+              ${ep.shop}
+            </a>
+          </td>
+
+          <td>${ep.set || "-"}</td>
+
+          <td>${ep.swissWins ?? "-"}</td>
+
+          <td class="points">
+            ${Number(ep.points).toFixed(1)}
+          </td>
+
+        </tr>
+      `;
+    });
+
+    html += `
+        </table>
+
+      </div>
+    `;
+
     // -------------------------
     // FAVOURED DECKS
     // -------------------------
@@ -221,19 +275,17 @@ fetch(API_URL + "?player=" + encodeURIComponent(playerName))
 
       if (!deckMap[deck]) {
 
-      deckMap[deck] = {
-        deck: deck,
-        usage: 0,
-        swissWins: 0,
-        points: 0
-      };
-    }
-    
-    deckMap[deck].usage += 1;
-    
-    deckMap[deck].swissWins += Number(ep.swissWins || 0);
-    
-    deckMap[deck].points += Number(ep.points);
+        deckMap[deck] = {
+          deck: deck,
+          usage: 0,
+          swissWins: 0,
+          points: 0
+        };
+      }
+
+      deckMap[deck].usage += 1;
+      deckMap[deck].swissWins += Number(ep.swissWins || 0);
+      deckMap[deck].points += Number(ep.points);
     });
 
     const decks = Object.values(deckMap);
@@ -261,17 +313,10 @@ fetch(API_URL + "?player=" + encodeURIComponent(playerName))
         <tr>
 
           <td>${d.deck}</td>
-        
           <td>${d.usage}</td>
-        
-          <td>
-            ${d.swissWins}
-          </td>
-        
-          <td class="points">
-            ${d.points.toFixed(1)}
-          </td>
-        
+          <td>${d.swissWins}</td>
+          <td class="points">${d.points.toFixed(1)}</td>
+
         </tr>
       `;
     });
@@ -281,10 +326,11 @@ fetch(API_URL + "?player=" + encodeURIComponent(playerName))
 
       </div>
     `;
-    
+
     // -------------------------
-    // HISTORY TABLE
+    // EPISODE HISTORY
     // -------------------------
+
     html += `
       <div class="card">
 
@@ -309,19 +355,16 @@ fetch(API_URL + "?player=" + encodeURIComponent(playerName))
 
           <td>${ep.episode}</td>
 
-
           <td>
-          <a href="./shop.html?shop=${encodeURIComponent(ep.shop)}">
-          ${ep.shop}
-          </a>
+            <a href="./shop.html?shop=${encodeURIComponent(ep.shop)}">
+              ${ep.shop}
+            </a>
           </td>
 
           <td>${ep.set || "-"}</td>
 
-          <td>
-            ${ep.swissWins ?? "-"}
-          </td>
-          
+          <td>${ep.swissWins ?? "-"}</td>
+
           <td class="points">
             ${Number(ep.points).toFixed(1)}
           </td>
