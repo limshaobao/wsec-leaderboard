@@ -127,18 +127,11 @@ function buildShopDropdown() {
   `;
 
   html += `
-    <option value="GLOBAL">
-      Global Leaderboard
-    </option>
+    <option value="GLOBAL">Global Leaderboard</option>
   `;
 
   shops.forEach(s => {
-
-    html += `
-      <option value="${s}">
-        ${s}
-      </option>
-    `;
+    html += `<option value="${s}">${s}</option>`;
   });
 
   html += `</select>`;
@@ -147,36 +140,24 @@ function buildShopDropdown() {
 }
 
 function changeShop() {
-
-  currentShop =
-    document.getElementById("shopSelect").value;
-
+  currentShop = document.getElementById("shopSelect").value;
   renderLeaderboard();
 }
 
 function renderLeaderboard() {
 
-  const shopLink =
-    document.getElementById("shopPageLink");
+  const shopLink = document.getElementById("shopPageLink");
 
   if (currentShop !== "GLOBAL") {
-
     shopLink.style.display = "inline-block";
-    shopLink.href =
-      "./shop.html?shop=" +
-      encodeURIComponent(currentShop);
-
+    shopLink.href = "./shop.html?shop=" + encodeURIComponent(currentShop);
   } else {
     shopLink.style.display = "none";
   }
 
-  let list = [];
-
-  if (currentShop === "GLOBAL") {
-    list = allPlayers;
-  } else {
-    list = shopData[currentShop].leaderboard;
-  }
+  let list = currentShop === "GLOBAL"
+    ? allPlayers
+    : shopData[currentShop].leaderboard;
 
   let html = `
     <table>
@@ -188,22 +169,17 @@ function renderLeaderboard() {
       </tr>
   `;
 
-  // -----------------------------
-  // GLOBAL VIEW (UPDATED LOGIC)
-  // -----------------------------
+  // =====================================================
+  // GLOBAL VIEW (UNCHANGED LOGIC)
+  // =====================================================
   if (currentShop === "GLOBAL") {
 
     const shopWinners = new Set();
 
     Object.values(shopData).forEach(shop => {
-      if (shop.finalWinner) {
-        shopWinners.add(shop.finalWinner);
-      }
+      if (shop.finalWinner) shopWinners.add(shop.finalWinner);
     });
 
-    // -----------------------------
-    // BUILD QUALIFICATION SET
-    // -----------------------------
     const blueSet = new Set();
 
     Object.values(shopData).forEach(shop => {
@@ -214,17 +190,10 @@ function renderLeaderboard() {
 
       const winner = shop.finalWinner;
 
-      // remove winner from pool (slot shift)
       const pool = leaderboard.filter(p => p.player !== winner);
 
-      // SLOT FILLING:
-      // effective 1st (green replacement), then 2 blue slots
-      const green = pool[0];   // replaces displaced winner
-      const blue1 = pool[1];   // 2nd slot
-      const blue2 = pool[2];   // 3rd slot
-
-      // IMPORTANT RULE:
-      // green is NOT blue eligible
+      const blue1 = pool[1];
+      const blue2 = pool[2];
 
       if (blue1) blueSet.add(blue1.player);
       if (blue2) blueSet.add(blue2.player);
@@ -238,17 +207,12 @@ function renderLeaderboard() {
 
       let style = "";
 
-      // 🥇 GLOBAL WINNER
       if (rank === 1) {
         style = "background:#ffd700;font-weight:bold;";
       }
-
-      // 🟩 SHOP WINNERS
       else if (shopWinners.has(p.player)) {
         style = "background:#b6fcb6;font-weight:bold;";
       }
-
-      // 🟦 QUALIFIERS (2nd–3rd per shop after shift)
       else if (blueSet.has(p.player)) {
         style = "background:#cfe8ff;";
       }
@@ -268,10 +232,28 @@ function renderLeaderboard() {
     });
   }
 
-  // -----------------------------
-  // SHOP VIEW (UNCHANGED)
-  // -----------------------------
+  // =====================================================
+  // SHOP VIEW (NOW MATCHES GLOBAL SLOT SHIFT LOGIC)
+  // =====================================================
   else {
+
+    const shop = shopData[currentShop];
+
+    const leaderboard = (shop.leaderboard || [])
+      .slice()
+      .sort((a, b) => (a.shopRank || 999) - (b.shopRank || 999));
+
+    const winner = shop.finalWinner;
+
+    const pool = leaderboard.filter(p => p.player !== winner);
+
+    const effectiveGreen = pool[0]; // shifted winner
+    const blue1 = pool[1];
+    const blue2 = pool[2];
+
+    const blueSet = new Set();
+    if (blue1) blueSet.add(blue1.player);
+    if (blue2) blueSet.add(blue2.player);
 
     list.forEach(p => {
 
@@ -281,15 +263,14 @@ function renderLeaderboard() {
 
       let style = "";
 
-      if (p.player === shopData[currentShop].finalWinner) {
+      // 🟩 effective winner (shifted if needed)
+      if (effectiveGreen && p.player === effectiveGreen.player) {
         style = "background:#b6fcb6;font-weight:bold;";
       }
 
-      else if (
-        rank === 1 &&
-        p.player !== shopData[currentShop].finalWinner
-      ) {
-        style = "background:#fff3cd;font-weight:bold;";
+      // 🟦 qualifiers after shift
+      else if (blueSet.has(p.player)) {
+        style = "background:#cfe8ff;";
       }
 
       html += `
