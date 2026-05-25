@@ -219,6 +219,15 @@ fetch(API_URL)
       ...new Set(allEpisodes.map(e => e.episode))
     ];
 
+    // numerical episode sorting
+    uniqueEpisodes.sort((a, b) => {
+
+      const numA = Number(a.replace(/\D/g, ""));
+      const numB = Number(b.replace(/\D/g, ""));
+
+      return numA - numB;
+    });
+
     const uniquePlayers = [
       ...new Set(allEpisodes.map(e => e.player))
     ];
@@ -414,17 +423,12 @@ fetch(API_URL)
 
       html += `
         <tr class="${rowClass}">
-
           <td>${p.shopRank}</td>
 
           <td>
-
             <a href="./player.html?player=${encodeURIComponent(p.player)}">
-
               ${p.player}
-
             </a>
-
           </td>
 
           <td>${p.episodesPlayed}</td>
@@ -499,13 +503,13 @@ fetch(API_URL)
         <h2>Detailed Episode Breakdown</h2>
     `;
 
-    uniqueEpisodes.sort();
-
     uniqueEpisodes.forEach(epName => {
 
       const rows = allEpisodes
         .filter(x => x.episode === epName)
-        .sort((a,b)=>b.points-a.points);
+        .sort((a, b) => {
+          return Number(a.placement) - Number(b.placement);
+        });
 
       html += `
         <div class="episode-block">
@@ -524,21 +528,17 @@ fetch(API_URL)
             </tr>
       `;
 
-      rows.forEach((r, index) => {
+      rows.forEach(r => {
 
         html += `
           <tr>
 
-            <td>${index + 1}</td>
+            <td>${r.placement || "-"}</td>
 
             <td>
-
               <a href="./player.html?player=${encodeURIComponent(r.player)}">
-
                 ${r.player}
-
               </a>
-
             </td>
 
             <td>${r.set || "-"}</td>
