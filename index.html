@@ -189,7 +189,6 @@ function renderLeaderboard() {
         .sort((a, b) => (a.shopRank || 999) - (b.shopRank || 999));
 
       const winner = shop.finalWinner;
-
       const pool = leaderboard.filter(p => p.player !== winner);
 
       const blue1 = pool[1];
@@ -233,7 +232,7 @@ function renderLeaderboard() {
   }
 
   // =====================================================
-  // SHOP VIEW (FIXED SHIFT LOGIC)
+  // SHOP VIEW (FIXED CASCADE SHIFT LOGIC)
   // =====================================================
   else {
 
@@ -250,17 +249,19 @@ function renderLeaderboard() {
 
     const winnerIsGlobalGold = (winner === globalWinner);
 
-    // -----------------------------------------------------
-    // SHIFT LOGIC RULES
-    // -----------------------------------------------------
-
+    // ----------------------------
+    // BASE RULES
+    // ----------------------------
     let greenIndex = 0;
     let blueStart = 1;
 
-    // if shop winner is ALSO global #1 → shift down
+    // ----------------------------
+    // CASCADE SHIFT RULE
+    // ONLY if shop winner = global #1
+    // ----------------------------
     if (winnerIsGlobalGold) {
-      greenIndex = 1; // promote #2 to green
-      blueStart = 2;  // blue becomes #3–4
+      greenIndex = 1; // rank 2 becomes green
+      blueStart = 2;  // ranks 3–4 become blue
     }
 
     const greenPlayer = leaderboard[greenIndex];
@@ -277,12 +278,12 @@ function renderLeaderboard() {
 
       let style = "";
 
-      // 🟩 green (dynamic)
+      // 🟩 GREEN (dynamic)
       if (greenPlayer && p.player === greenPlayer.player) {
         style = "background:#b6fcb6;font-weight:bold;";
       }
 
-      // 🟦 blue (dynamic)
+      // 🟦 BLUE (dynamic)
       else if (blueSet.has(p.player)) {
         style = "background:#cfe8ff;";
       }
