@@ -127,54 +127,106 @@ function changeShop() {
       </tr>
   `;
 
-  list.forEach((p) => {
+  // -----------------------------
+  // ONLY GLOBAL NEEDS COMPLEX LOGIC
+  // -----------------------------
+  if (currentShop === "GLOBAL") {
 
-    const rank = currentShop === "GLOBAL"
-      ? p.globalRank
-      : p.shopRank;
+    const shopWinners = new Set();
 
-    const points = p.totalPoints.toFixed(1);
+    // collect ALL shop winners (rank 1 in each shop)
+    Object.values(shopData).forEach(shop => {
+      const winner = shop.leaderboard?.[0];
+      if (winner) shopWinners.add(winner.player);
+    });
 
-    const episodes = p.episodesPlayed ?? "-";
+    const top16 = [];
+    const rest = [];
 
-    let style = "";
+    list.forEach(p => {
 
-    // 🥇 GLOBAL CHAMPION
-    if (currentShop === "GLOBAL" && rank === 1) {
-      style = "background:#ffd700; font-weight:bold;";
-    }
+      if (p.globalRank === 1) return;
 
-    // 🟩 SHOP WINNERS (NOT GLOBAL #1)
-    else if (
-      currentShop !== "GLOBAL" &&
-      rank === 1 &&
-      p.globalRank !== 1
-    ) {
-      style = "background:#b6fcb6; font-weight:bold;";
-    }
+      if (shopWinners.has(p.player)) {
+        return;
+      }
 
-    // 🟦 TOP 16 (excluding global #1 AND shop winners)
-    else if (
-      currentShop === "GLOBAL" &&
-      rank >= 2 &&
-      rank <= 17
-    ) {
-      style = "background:#cfe8ff;";
-    }
+      top16.push(p);
+    });
 
-    html += `
-      <tr style="${style}">
-        <td>${rank}</td>
-        <td>
-          <a href="./player.html?player=${encodeURIComponent(p.player)}">
-            ${p.player}
-          </a>
-        </td>
-        <td>${points}</td>
-        <td>${episodes}</td>
-      </tr>
-    `;
-  });
+    // sort top16 by global rank (stable)
+    top16.sort((a, b) => a.globalRank - b.globalRank);
+
+    const blueGroup = top16.slice(0, 16);
+
+    const blueSet = new Set(blueGroup.map(p => p.player));
+
+    list.forEach(p => {
+
+      const rank = p.globalRank;
+      const points = p.totalPoints.toFixed(1);
+      const episodes = p.episodesPlayed ?? "-";
+
+      let style = "";
+
+      // 🥇 GLOBAL #1
+      if (rank === 1) {
+        style = "background:#ffd700; font-weight:bold;";
+      }
+
+      // 🟩 SHOP WINNERS (excluding global #1)
+      else if (shopWinners.has(p.player)) {
+        style = "background:#b6fcb6; font-weight:bold;";
+      }
+
+      // 🟦 DYNAMIC BLUE RANGE (next 16 after exclusions)
+      else if (blueSet.has(p.player)) {
+        style = "background:#cfe8ff;";
+      }
+
+      html += `
+        <tr style="${style}">
+          <td>${rank}</td>
+          <td>
+            <a href="./player.html?player=${encodeURIComponent(p.player)}">
+              ${p.player}
+            </a>
+          </td>
+          <td>${points}</td>
+          <td>${episodes}</td>
+        </tr>
+      `;
+    });
+
+  }
+
+  // -----------------------------
+  // SHOP VIEW (UNCHANGED LOGIC)
+  // -----------------------------
+  else {
+
+    list.forEach(p => {
+
+      const rank = p.shopRank;
+      const points = p.totalPoints.toFixed(1);
+
+      let style = "";
+
+      // 🟩 shop winner
+      if (rank === 1) {
+        style = "background:#b6fcb6; font-weight:bold;";
+      }
+
+      html += `
+        <tr style="${style}">
+          <td>${rank}</td>
+          <td>${p.player}</td>
+          <td>${points}</td>
+          <td>-</td>
+        </tr>
+      `;
+    });
+  }
 
   html += `</table>`;
 
