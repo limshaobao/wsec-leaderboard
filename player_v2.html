@@ -149,13 +149,15 @@ function getEpisodeWR(ep) {
 }
 
 /* =========================
-   BEST PER EPISODE (GRAPH + TABLE SOURCE OF TRUTH)
+   BEST PER EPISODE (FIXED SOURCE OF TRUTH)
 ========================= */
 const episodeBestMap = {};
 
 p.episodes.forEach(ep => {
+
   const key = ep.episode;
 
+  // keep ONLY highest scoring entry per episode
   if (!episodeBestMap[key] || ep.points > episodeBestMap[key].points) {
     episodeBestMap[key] = {
       episode: ep.episode,
@@ -304,12 +306,12 @@ html += `
 
 Object.values(episodeBestMap).forEach(ep => {
 
-const epSwissTotal = (ep.swissWins || 0) + (ep.swissLosses || 0);
-const epSwissWR = epSwissTotal ? ((ep.swissWins / epSwissTotal) * 100).toFixed(1) : "0.0";
+  const epSwissTotal = (ep.swissWins || 0) + (ep.swissLosses || 0);
+  const epSwissWR = epSwissTotal ? ((ep.swissWins / epSwissTotal) * 100).toFixed(1) : "0.0";
 
-const epWR = getEpisodeWR(ep);
+  const epWR = getEpisodeWR(ep);
 
-html += `
+  html += `
 <tr>
 <td>${ep.episode}</td>
 <td>${ep.shop}</td>
@@ -332,26 +334,27 @@ const deckMap = {};
 
 p.episodes.forEach(ep => {
 
-const d = ep.set || "Unknown";
+  const d = ep.set || "Unknown";
 
-if (!deckMap[d]) {
-  deckMap[d] = {
-    deck: d,
-    usage: 0,
-    swissWins: 0,
-    swissLosses: 0,
-    topCuts: 0,
-    tops: 0,
-    points: 0
-  };
-}
+  if (!deckMap[d]) {
+    deckMap[d] = {
+      deck: d,
+      usage: 0,
+      swissWins: 0,
+      swissLosses: 0,
+      topCuts: 0,
+      tops: 0,
+      points: 0
+    };
+  }
 
-deckMap[d].usage++;
-deckMap[d].swissWins += ep.swissWins;
-deckMap[d].swissLosses += ep.swissLosses;
-deckMap[d].topCuts += ep.topCutWins > 0 ? 1 : 0;
-deckMap[d].points += ep.points;
-if (ep.placement == 1) deckMap[d].tops++;
+  deckMap[d].usage++;
+  deckMap[d].swissWins += ep.swissWins;
+  deckMap[d].swissLosses += ep.swissLosses;
+  deckMap[d].topCuts += ep.topCutWins > 0 ? 1 : 0;
+  deckMap[d].points += ep.points;
+
+  if (ep.placement == 1) deckMap[d].tops++;
 });
 
 const decks = Object.values(deckMap).sort((a, b) => b.usage - a.usage);
@@ -376,15 +379,15 @@ html += `
 
 decks.forEach(d => {
 
-const swissTotal = d.swissWins + d.swissLosses;
-const swissWRDeck = swissTotal ? ((d.swissWins / swissTotal) * 100).toFixed(1) : "0.0";
+  const swissTotal = d.swissWins + d.swissLosses;
+  const swissWRDeck = swissTotal ? ((d.swissWins / swissTotal) * 100).toFixed(1) : "0.0";
 
-const totalWins = d.swissWins + d.topCuts;
-const totalLosses = d.swissLosses + d.topCuts;
-const overallTotal = totalWins + totalLosses;
-const overallWRDeck = overallTotal ? ((totalWins / overallTotal) * 100).toFixed(1) : "0.0";
+  const totalWins = d.swissWins + d.topCuts;
+  const totalLosses = d.swissLosses + d.topCuts;
+  const overallTotal = totalWins + totalLosses;
+  const overallWRDeck = overallTotal ? ((totalWins / overallTotal) * 100).toFixed(1) : "0.0";
 
-html += `
+  html += `
 <tr>
 <td>${d.deck}</td>
 <td>${d.usage}</td>
@@ -422,7 +425,7 @@ html += `
 
 episodesSorted.forEach(ep => {
 
-html += `
+  html += `
 <tr>
 <td>${ep.episode}</td>
 <td>${ep.shop}</td>
@@ -438,7 +441,7 @@ html += `
 html += `</table></div></div>`;
 
 /* =========================
-   GRAPH (FIXED ORDER + SAFE INIT)
+   GRAPH (FIXED)
 ========================= */
 
 html += `
@@ -452,7 +455,9 @@ html += `
 
 document.getElementById("content").innerHTML = html;
 
-const ctx = document.getElementById("chart").getContext("2d");
+/* IMPORTANT: safe chart init AFTER DOM injection */
+const canvas = document.getElementById("chart");
+const ctx = canvas.getContext("2d");
 
 new Chart(ctx, {
   type: "line",
