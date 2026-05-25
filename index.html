@@ -170,32 +170,27 @@ function renderLeaderboard() {
   `;
 
   // =====================================================
-  // GLOBAL VIEW (UNCHANGED LOGIC)
+  // GLOBAL VIEW
   // =====================================================
   if (currentShop === "GLOBAL") {
 
     const shopWinners = new Set();
 
     Object.values(shopData).forEach(shop => {
-      if (shop.finalWinner) shopWinners.add(shop.finalWinner);
+      if (shop.finalWinner) {
+        shopWinners.add(shop.finalWinner);
+      }
     });
 
     const blueSet = new Set();
 
     Object.values(shopData).forEach(shop => {
 
-      const leaderboard = (shop.leaderboard || [])
-        .slice()
-        .sort((a, b) => (a.shopRank || 999) - (b.shopRank || 999));
+      const ui = shop.ui || {};
 
-      const winner = shop.finalWinner;
-      const pool = leaderboard.filter(p => p.player !== winner);
-
-      const blue1 = pool[1];
-      const blue2 = pool[2];
-
-      if (blue1) blueSet.add(blue1.player);
-      if (blue2) blueSet.add(blue2.player);
+      (ui.bluePlayers || []).forEach(player => {
+        blueSet.add(player);
+      });
     });
 
     list.forEach(p => {
@@ -206,12 +201,17 @@ function renderLeaderboard() {
 
       let style = "";
 
+      // 🥇 GLOBAL WINNER
       if (rank === 1) {
         style = "background:#ffd700;font-weight:bold;";
       }
+
+      // 🟩 SHOP WINNERS
       else if (shopWinners.has(p.player)) {
         style = "background:#b6fcb6;font-weight:bold;";
       }
+
+      // 🟦 QUALIFIERS
       else if (blueSet.has(p.player)) {
         style = "background:#cfe8ff;";
       }
@@ -219,11 +219,13 @@ function renderLeaderboard() {
       html += `
         <tr style="${style}">
           <td>${rank}</td>
+
           <td>
             <a href="./player_v2.html?player=${encodeURIComponent(p.player)}">
               ${p.player}
             </a>
           </td>
+
           <td>${points}</td>
           <td>${episodes}</td>
         </tr>
@@ -232,12 +234,15 @@ function renderLeaderboard() {
   }
 
   // =====================================================
-  // SHOP VIEW (BACKEND-DRIVEN UI + GOLD OVERRIDE FIX)
+  // SHOP VIEW
   // =====================================================
   else {
 
     const shop = shopData[currentShop];
-    const ui = shop.ui;
+    const ui = shop.ui || {};
+
+    const greenPlayer = ui.greenPlayer;
+    const bluePlayers = new Set(ui.bluePlayers || []);
 
     const globalWinner =
       allPlayers.find(p => p.globalRank === 1)?.player;
@@ -250,29 +255,31 @@ function renderLeaderboard() {
 
       let style = "";
 
-      // 🥇 GLOBAL #1 ALWAYS GOLD IN THEIR SHOP IF RANK 1 THERE
-      if (p.player === globalWinner && rank === 1) {
+      // 🥇 GLOBAL #1 ALWAYS GOLD
+      if (p.player === globalWinner) {
         style = "background:#ffd700;font-weight:bold;";
       }
 
-      // 🟩 GREEN FROM BACKEND
-      else if (p.player === ui.greenPlayer) {
+      // 🟩 GREEN SLOT
+      else if (p.player === greenPlayer) {
         style = "background:#b6fcb6;font-weight:bold;";
       }
 
-      // 🟦 BLUE FROM BACKEND
-      else if (ui.bluePlayers.includes(p.player)) {
+      // 🟦 BLUE SLOTS
+      else if (bluePlayers.has(p.player)) {
         style = "background:#cfe8ff;";
       }
 
       html += `
         <tr style="${style}">
           <td>${rank}</td>
+
           <td>
             <a href="./player_v2.html?player=${encodeURIComponent(p.player)}">
               ${p.player}
             </a>
           </td>
+
           <td>${points}</td>
           <td>${episodes}</td>
         </tr>
@@ -281,6 +288,7 @@ function renderLeaderboard() {
   }
 
   html += `</table>`;
+
   document.getElementById("leaderboard").innerHTML = html;
 }
 
