@@ -233,7 +233,7 @@ function renderLeaderboard() {
   }
 
   // =====================================================
-  // SHOP VIEW (NOW MATCHES GLOBAL SLOT SHIFT LOGIC)
+  // SHOP VIEW (FIXED SHIFT LOGIC)
   // =====================================================
   else {
 
@@ -245,15 +245,29 @@ function renderLeaderboard() {
 
     const winner = shop.finalWinner;
 
-    const pool = leaderboard.filter(p => p.player !== winner);
+    const globalWinner =
+      allPlayers.find(p => p.globalRank === 1)?.player;
 
-    const effectiveGreen = pool[0]; // shifted winner
-    const blue1 = pool[1];
-    const blue2 = pool[2];
+    const winnerIsGlobalGold = (winner === globalWinner);
+
+    // -----------------------------------------------------
+    // SHIFT LOGIC RULES
+    // -----------------------------------------------------
+
+    let greenIndex = 0;
+    let blueStart = 1;
+
+    // if shop winner is ALSO global #1 → shift down
+    if (winnerIsGlobalGold) {
+      greenIndex = 1; // promote #2 to green
+      blueStart = 2;  // blue becomes #3–4
+    }
+
+    const greenPlayer = leaderboard[greenIndex];
 
     const blueSet = new Set();
-    if (blue1) blueSet.add(blue1.player);
-    if (blue2) blueSet.add(blue2.player);
+    if (leaderboard[blueStart]) blueSet.add(leaderboard[blueStart].player);
+    if (leaderboard[blueStart + 1]) blueSet.add(leaderboard[blueStart + 1].player);
 
     list.forEach(p => {
 
@@ -263,12 +277,12 @@ function renderLeaderboard() {
 
       let style = "";
 
-      // 🟩 effective winner (shifted if needed)
-      if (effectiveGreen && p.player === effectiveGreen.player) {
+      // 🟩 green (dynamic)
+      if (greenPlayer && p.player === greenPlayer.player) {
         style = "background:#b6fcb6;font-weight:bold;";
       }
 
-      // 🟦 qualifiers after shift
+      // 🟦 blue (dynamic)
       else if (blueSet.has(p.player)) {
         style = "background:#cfe8ff;";
       }
