@@ -56,7 +56,9 @@ h1, h2 { margin-top: 0; }
   color: #666;
 }
 
-.table-wrap { overflow-x: auto; }
+.table-wrap {
+  overflow-x: auto;
+}
 
 table {
   width: 100%;
@@ -76,13 +78,22 @@ td {
   border-bottom: 1px solid #eee;
 }
 
-tr:nth-child(even) { background: #fafafa; }
+tr:nth-child(even) {
+  background: #fafafa;
+}
 
-.points { font-weight: bold; }
+.points {
+  font-weight: bold;
+}
 
-.comment { font-style: italic; color: #555; }
+.comment {
+  font-style: italic;
+  color: #555;
+}
 
-.chart-container { height: 420px; }
+.chart-container {
+  height: 420px;
+}
 
 .back-link {
   display:inline-block;
@@ -92,10 +103,30 @@ tr:nth-child(even) { background: #fafafa; }
   text-decoration:none;
 }
 
+.shop-link {
+  color:#005bbb;
+  text-decoration:none;
+  font-weight:bold;
+}
+
+.shop-link:hover {
+  text-decoration:underline;
+}
+
 @media (max-width: 768px) {
-  body { padding: 14px; }
-  .card { padding: 18px; }
-  th, td { font-size: 13px; padding: 10px; }
+
+  body {
+    padding: 14px;
+  }
+
+  .card {
+    padding: 18px;
+  }
+
+  th, td {
+    font-size: 13px;
+    padding: 10px;
+  }
 }
 
 </style>
@@ -117,74 +148,52 @@ tr:nth-child(even) { background: #fafafa; }
 const API_URL =
 "https://script.google.com/macros/s/AKfycbzuWLCBe3q12dR8zlRYmUx0QWCutjMZvaUlnkb887jTMd_8pEdE1BN30fp5RUXPCFuA1Q/exec";
 
-const playerName = new URLSearchParams(window.location.search).get("player");
+const playerName =
+  new URLSearchParams(window.location.search).get("player");
 
 fetch(API_URL + "?player=" + encodeURIComponent(playerName))
+
 .then(r => r.json())
+
 .then(data => {
 
 const p = data.player;
 
 if (!p) {
-  document.getElementById("content").innerHTML = "<h2>Player not found</h2>";
+
+  document.getElementById("content").innerHTML =
+    "<h2>Player not found</h2>";
+
   return;
 }
 
 /* =========================
-   HARD FIXES
-========================= */
-
-function getSwissRounds(playerCount) {
-  if (playerCount <= 8) return 3;
-  if (playerCount <= 16) return 4;
-  if (playerCount <= 32) return 5;
-  if (playerCount <= 64) return 6;
-  if (playerCount <= 128) return 7;
-  return 8;
-}
-
-function getTopCutSize(playerCount) {
-  if (playerCount >= 129) return 64;
-  if (playerCount >= 65) return 32;
-  if (playerCount >= 33) return 16;
-  if (playerCount >= 17) return 8;
-  if (playerCount >= 9) return 4;
-  return 0;
-}
-
-/* =========================
    NORMALISE EPISODES
+   (BACKEND IS SOURCE OF TRUTH)
 ========================= */
 
 p.episodes = p.episodes.map(ep => {
 
-  const playerCount = Number(ep.playerCount || 0);
-
-  const swissRounds = getSwissRounds(playerCount);
-
-  const swissWins = Number(ep.swissWins || 0);
-
-  const swissLosses =
-    Math.max(0, swissRounds - swissWins);
-
-  const topCutSize =
-    getTopCutSize(playerCount);
-
-  const placement =
-    Number(ep.placement || 999);
-
-  const cutReached =
-    topCutSize > 0 &&
-    placement <= topCutSize;
-
   return {
+
     ...ep,
 
-    swissRounds,
-    swissLosses,
+    swissWins: Number(ep.swissWins || 0),
+    swissLosses: Number(ep.swissLosses || 0),
 
-    topCutSize,
-    cutReached
+    topCutWins: Number(ep.topCutWins || 0),
+    topCutLosses: Number(ep.topCutLosses || 0),
+
+    totalWins: Number(ep.totalWins || 0),
+    totalLosses: Number(ep.totalLosses || 0),
+
+    playerCount: Number(ep.playerCount || 0),
+    swissRounds: Number(ep.swissRounds || 0),
+    topCutSize: Number(ep.topCutSize || 0),
+
+    cutReached: Boolean(ep.cutReached),
+
+    points: Number(ep.points || 0)
   };
 });
 
@@ -195,6 +204,9 @@ p.episodes = p.episodes.map(ep => {
 let totalSwissWins = 0;
 let totalSwissLosses = 0;
 
+let totalTopCutWins = 0;
+let totalTopCutLosses = 0;
+
 let totalWins = 0;
 let totalLosses = 0;
 
@@ -202,11 +214,14 @@ let topCuts = 0;
 
 p.episodes.forEach(ep => {
 
-  totalSwissWins += Number(ep.swissWins || 0);
-  totalSwissLosses += Number(ep.swissLosses || 0);
+  totalSwissWins += ep.swissWins;
+  totalSwissLosses += ep.swissLosses;
 
-  totalWins += Number(ep.totalWins || 0);
-  totalLosses += Number(ep.totalLosses || 0);
+  totalTopCutWins += ep.topCutWins;
+  totalTopCutLosses += ep.topCutLosses;
+
+  totalWins += ep.totalWins;
+  totalLosses += ep.totalLosses;
 
   if (ep.cutReached) {
     topCuts++;
@@ -215,6 +230,9 @@ p.episodes.forEach(ep => {
 
 p.totalSwissWins = totalSwissWins;
 p.totalSwissLosses = totalSwissLosses;
+
+p.totalTopCutWins = totalTopCutWins;
+p.totalTopCutLosses = totalTopCutLosses;
 
 p.totalWins = totalWins;
 p.totalLosses = totalLosses;
@@ -226,6 +244,7 @@ p.topCuts = topCuts;
 ========================= */
 
 const episodesSorted = [...p.episodes].sort((a, b) =>
+
   Number(a.episode.toString().replace(/\D/g, '')) -
   Number(b.episode.toString().replace(/\D/g, ''))
 );
@@ -246,6 +265,7 @@ p.episodes.forEach(ep => {
 });
 
 const graphData = Object.values(episodeBestMap).sort((a, b) =>
+
   Number(a.episode.toString().replace(/\D/g, '')) -
   Number(b.episode.toString().replace(/\D/g, ''))
 );
@@ -269,6 +289,22 @@ const swissWR =
   swissGames
     ? ((p.totalSwissWins / swissGames) * 100).toFixed(1)
     : "0.0";
+
+/* =========================
+   SHOP LINK
+========================= */
+
+function shopLink(shopName) {
+
+  return `
+    <a
+      class="shop-link"
+      href="./shop.html?shop=${encodeURIComponent(shopName)}"
+    >
+      ${shopName}
+    </a>
+  `;
+}
 
 /* =========================
    HEADER
@@ -311,6 +347,7 @@ let html = `
 
 html += `
 <div class="card">
+
 <h2>Performance Overview</h2>
 
 <div class="stats">
@@ -340,6 +377,7 @@ html += `
 
 html += `
 <div class="card">
+
 <h2>Match Record</h2>
 
 <div class="stats">
@@ -374,10 +412,12 @@ html += `
 
 html += `
 <div class="card">
+
 <h2>Top Scores Per Episode</h2>
 
 <div class="table-wrap">
 <table>
+
 <tr>
 <th>Episode</th>
 <th>Shop</th>
@@ -392,8 +432,10 @@ html += `
 `;
 
 Object.values(episodeBestMap)
+
 .sort((a, b) => (b.points || 0) - (a.points || 0))
 .slice(0, 5)
+
 .forEach(ep => {
 
   const swissTotal =
@@ -415,7 +457,7 @@ Object.values(episodeBestMap)
   html += `
 <tr>
 <td>${ep.episode}</td>
-<td>${ep.shop}</td>
+<td>${shopLink(ep.shop)}</td>
 <td>${ep.placement}</td>
 <td>${ep.set}</td>
 <td>${ep.swissWins}</td>
@@ -427,7 +469,11 @@ Object.values(episodeBestMap)
 `;
 });
 
-html += `</table></div></div>`;
+html += `
+</table>
+</div>
+</div>
+`;
 
 /* =========================
    EPISODE HISTORY
@@ -435,10 +481,12 @@ html += `</table></div></div>`;
 
 html += `
 <div class="card">
+
 <h2>Episode History</h2>
 
 <div class="table-wrap">
 <table>
+
 <tr>
 <th>Episode</th>
 <th>Shop</th>
@@ -474,7 +522,7 @@ episodesSorted.forEach(ep => {
   html += `
 <tr>
 <td>${ep.episode}</td>
-<td>${ep.shop}</td>
+<td>${shopLink(ep.shop)}</td>
 <td>${ep.placement}</td>
 <td>${ep.set}</td>
 <td>${ep.swissWins}</td>
@@ -487,7 +535,11 @@ episodesSorted.forEach(ep => {
 `;
 });
 
-html += `</table></div></div>`;
+html += `
+</table>
+</div>
+</div>
+`;
 
 /* =========================
    GRAPH
@@ -495,31 +547,48 @@ html += `</table></div></div>`;
 
 html += `
 <div class="card">
+
 <h2>Best Episode Progression</h2>
+
 <div class="chart-container">
 <canvas id="chart"></canvas>
 </div>
+
 </div>
 `;
 
 document.getElementById("content").innerHTML = html;
 
-const canvas = document.getElementById("chart");
-const ctx = canvas.getContext("2d");
+/* =========================
+   CHART
+========================= */
+
+const canvas =
+  document.getElementById("chart");
+
+const ctx =
+  canvas.getContext("2d");
 
 new Chart(ctx, {
+
   type: "line",
+
   data: {
+
     labels: graphData.map(x => x.episode),
+
     datasets: [{
       label: "Best Episode Score",
       data: graphData.map(x => x.points),
       tension: 0.25
     }]
   },
+
   options: {
+
     responsive: true,
     maintainAspectRatio: false,
+
     scales: {
       y: {
         beginAtZero: true
@@ -529,8 +598,11 @@ new Chart(ctx, {
 });
 
 })
+
 .catch(err => {
+
   console.error(err);
+
   document.getElementById("content").innerHTML =
     "<h2>Failed to load player</h2>";
 });
