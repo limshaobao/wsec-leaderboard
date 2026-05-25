@@ -219,7 +219,6 @@ fetch(API_URL)
       ...new Set(allEpisodes.map(e => e.episode))
     ];
 
-    // numerical episode sorting
     uniqueEpisodes.sort((a, b) => {
 
       const numA = Number(a.replace(/\D/g, ""));
@@ -239,7 +238,6 @@ fetch(API_URL)
     const highestPoints =
       Math.max(...allEpisodes.map(e => e.points));
 
-    // highest attendance
     let highestAttendance = 0;
 
     uniqueEpisodes.forEach(ep => {
@@ -274,6 +272,7 @@ fetch(API_URL)
           deck,
           usage: 0,
           swissWins: 0,
+          tops: 0,
           points: 0
         };
       }
@@ -282,6 +281,10 @@ fetch(API_URL)
 
       deckMap[deck].swissWins +=
         Number(ep.swissWins || 0);
+
+      // NEW: TOPS (event wins)
+      deckMap[deck].tops +=
+        Number(ep.placement === 1 ? 1 : 0);
 
       deckMap[deck].points +=
         Number(ep.points || 0);
@@ -296,9 +299,6 @@ fetch(API_URL)
     // ---------------------------------
     let html = "";
 
-    // =================================
-    // HEADER CARD
-    // =================================
     html += `
       <div class="card">
 
@@ -356,9 +356,6 @@ fetch(API_URL)
       </div>
     `;
 
-    // =================================
-    // LEADING PLAYER
-    // =================================
     if (leader) {
 
       html += `
@@ -386,9 +383,9 @@ fetch(API_URL)
       `;
     }
 
-    // =================================
-    // MAIN SHOP LEADERBOARD
-    // =================================
+    // ---------------------------------
+    // SHOP LEADERBOARD
+    // ---------------------------------
     html += `
       <div class="card">
 
@@ -409,17 +406,8 @@ fetch(API_URL)
 
       let rowClass = "";
 
-      if (p.player === shop.finalWinner) {
-
-        rowClass = "green";
-
-      } else if (
-        p.shopRank === 1 &&
-        p.player !== shop.finalWinner
-      ) {
-
-        rowClass = "yellow";
-      }
+      if (p.player === shop.finalWinner) rowClass = "green";
+      else if (p.shopRank === 1) rowClass = "yellow";
 
       html += `
         <tr class="${rowClass}">
@@ -432,14 +420,8 @@ fetch(API_URL)
           </td>
 
           <td>${p.episodesPlayed}</td>
-
-          <td>
-            ${Number(p.bestScore).toFixed(1)}
-          </td>
-
-          <td>
-            ${Number(p.totalPoints).toFixed(1)}
-          </td>
+          <td>${Number(p.bestScore).toFixed(1)}</td>
+          <td>${Number(p.totalPoints).toFixed(1)}</td>
 
         </tr>
       `;
@@ -451,9 +433,9 @@ fetch(API_URL)
       </div>
     `;
 
-    // =================================
-    // DECK META TABLE
-    // =================================
+    // ---------------------------------
+    // DECK META TABLE (UPDATED)
+    // ---------------------------------
     html += `
       <div class="card">
 
@@ -465,6 +447,7 @@ fetch(API_URL)
             <th>Deck</th>
             <th>Usage</th>
             <th>Total Swiss Wins</th>
+            <th>Tops</th>
             <th>Total Points</th>
           </tr>
     `;
@@ -475,14 +458,10 @@ fetch(API_URL)
         <tr>
 
           <td>${d.deck}</td>
-
           <td>${d.usage}</td>
-
           <td>${d.swissWins}</td>
-
-          <td>
-            ${d.points.toFixed(1)}
-          </td>
+          <td>${d.tops}</td>
+          <td>${d.points.toFixed(1)}</td>
 
         </tr>
       `;
@@ -494,9 +473,9 @@ fetch(API_URL)
       </div>
     `;
 
-    // =================================
-    // DETAILED EPISODE BREAKDOWN
-    // =================================
+    // ---------------------------------
+    // EPISODE BREAKDOWN
+    // ---------------------------------
     html += `
       <div class="card">
 
@@ -507,9 +486,7 @@ fetch(API_URL)
 
       const rows = allEpisodes
         .filter(x => x.episode === epName)
-        .sort((a, b) => {
-          return Number(a.placement) - Number(b.placement);
-        });
+        .sort((a,b)=>Number(a.placement)-Number(b.placement));
 
       html += `
         <div class="episode-block">
@@ -542,16 +519,9 @@ fetch(API_URL)
             </td>
 
             <td>${r.set || "-"}</td>
-
             <td>${r.swissWins ?? "-"}</td>
-
-            <td>
-              ${Number(r.points).toFixed(1)}
-            </td>
-
-            <td class="comment">
-              ${r.comment || ""}
-            </td>
+            <td>${Number(r.points).toFixed(1)}</td>
+            <td class="comment">${r.comment || ""}</td>
 
           </tr>
         `;
@@ -566,8 +536,7 @@ fetch(API_URL)
 
     html += `</div>`;
 
-    document.getElementById("content").innerHTML =
-      html;
+    document.getElementById("content").innerHTML = html;
   })
 
   .catch(err => {
