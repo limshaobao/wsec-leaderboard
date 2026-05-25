@@ -309,7 +309,12 @@ fetch(API_URL + "?player=" + encodeURIComponent(playerName))
 
           <td>${ep.episode}</td>
 
-          <td>${ep.shop}</td>
+
+          <td>
+          <a href="./shop.html?shop=${encodeURIComponent(ep.shop)}">
+          ${ep.shop}
+          </a>
+          </td>
 
           <td>${ep.set || "-"}</td>
 
