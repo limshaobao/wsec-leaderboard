@@ -142,8 +142,8 @@ const episodesSorted = [...p.episodes].sort((a, b) =>
    EPISODE WINRATE
 ========================= */
 function getEpisodeWR(ep) {
-  const wins = (ep.swissWins || 0) + (ep.topCutWins || 0);
-  const losses = (ep.swissLosses || 0) + (ep.topCutLosses || 0);
+  const wins = (ep.totalWins || 0);
+  const losses = (ep.totalLosses || 0);
   const total = wins + losses;
   return total ? ((wins / total) * 100).toFixed(1) : "0.0";
 }
@@ -164,10 +164,19 @@ p.episodes.forEach(ep => {
       shop: ep.shop,
       placement: ep.placement,
       set: ep.set,
+
       swissWins: ep.swissWins,
       swissLosses: ep.swissLosses,
+
       topCutWins: ep.topCutWins,
       topCutLosses: ep.topCutLosses,
+
+      totalWins: ep.totalWins,
+      totalLosses: ep.totalLosses,
+
+      topCutSize: ep.topCutSize,
+      cutReached: ep.cutReached,
+
       points: ep.points,
       comment: ep.comment
     };
@@ -182,11 +191,24 @@ const graphData = Object.values(episodeBestMap).sort((a, b) =>
 /* =========================
    GLOBAL WINRATE
 ========================= */
-const totalGames = (p.totalWins || 0) + (p.totalLosses || 0);
-const overallWR = totalGames ? ((p.totalWins / totalGames) * 100).toFixed(1) : "0.0";
 
-const swissGames = (p.totalSwissWins || 0) + (p.totalSwissLosses || 0);
-const swissWR = swissGames ? ((p.totalSwissWins / swissGames) * 100).toFixed(1) : "0.0";
+const totalGames =
+  (p.totalWins || 0) +
+  (p.totalLosses || 0);
+
+const overallWR =
+  totalGames
+    ? ((p.totalWins / totalGames) * 100).toFixed(1)
+    : "0.0";
+
+const swissGames =
+  (p.totalSwissWins || 0) +
+  (p.totalSwissLosses || 0);
+
+const swissWR =
+  swissGames
+    ? ((p.totalSwissWins / swissGames) * 100).toFixed(1)
+    : "0.0";
 
 /* =========================
    HEADER
@@ -282,8 +304,9 @@ html += `
 </div>
 </div>
 `;
+
 /* =========================
-   TOP SCORES PER EPISODE (TOP 5, SORTED BY POINTS)
+   TOP SCORES PER EPISODE
 ========================= */
 html += `
 <div class="card">
@@ -299,6 +322,7 @@ html += `
 <th>Swiss Wins</th>
 <th>Swiss Winrate</th>
 <th>Overall Winrate</th>
+<th>Top Cut</th>
 <th>Points</th>
 </tr>
 `;
@@ -308,18 +332,24 @@ Object.values(episodeBestMap)
   .slice(0, 5)
   .forEach(ep => {
 
-    const epSwissTotal = (ep.swissWins || 0) + (ep.swissLosses || 0);
-    const epSwissWR = epSwissTotal
-      ? ((ep.swissWins / epSwissTotal) * 100).toFixed(1)
-      : "0.0";
+    const epSwissTotal =
+      (ep.swissWins || 0) +
+      (ep.swissLosses || 0);
 
-    const wins = (ep.swissWins || 0) + (ep.topCutWins || 0);
-    const losses = (ep.swissLosses || 0) + (ep.topCutLosses || 0);
+    const epSwissWR =
+      epSwissTotal
+        ? ((ep.swissWins / epSwissTotal) * 100).toFixed(1)
+        : "0.0";
+
+    const wins = (ep.totalWins || 0);
+    const losses = (ep.totalLosses || 0);
+
     const total = wins + losses;
 
-    const epWR = total
-      ? ((wins / total) * 100).toFixed(1)
-      : "0.0";
+    const epWR =
+      total
+        ? ((wins / total) * 100).toFixed(1)
+        : "0.0";
 
     html += `
 <tr>
@@ -330,6 +360,7 @@ Object.values(episodeBestMap)
 <td>${ep.swissWins}</td>
 <td>${epSwissWR}%</td>
 <td>${epWR}%</td>
+<td>${ep.cutReached ? "Yes" : "No"}</td>
 <td class="points">${ep.points.toFixed(1)}</td>
 </tr>
 `;
@@ -350,8 +381,13 @@ p.episodes.forEach(ep => {
     deckMap[d] = {
       deck: d,
       usage: 0,
+
       swissWins: 0,
       swissLosses: 0,
+
+      totalWins: 0,
+      totalLosses: 0,
+
       topCuts: 0,
       tops: 0,
       points: 0
@@ -359,12 +395,22 @@ p.episodes.forEach(ep => {
   }
 
   deckMap[d].usage++;
-  deckMap[d].swissWins += ep.swissWins;
-  deckMap[d].swissLosses += ep.swissLosses;
-  deckMap[d].topCuts += ep.topCutWins > 0 ? 1 : 0;
+
+  deckMap[d].swissWins += (ep.swissWins || 0);
+  deckMap[d].swissLosses += (ep.swissLosses || 0);
+
+  deckMap[d].totalWins += (ep.totalWins || 0);
+  deckMap[d].totalLosses += (ep.totalLosses || 0);
+
+  if (ep.cutReached) {
+    deckMap[d].topCuts++;
+  }
+
   deckMap[d].points += ep.points;
 
-  if (ep.placement == 1) deckMap[d].tops++;
+  if (ep.placement == 1) {
+    deckMap[d].tops++;
+  }
 });
 
 const decks = Object.values(deckMap).sort((a, b) => b.usage - a.usage);
@@ -389,13 +435,21 @@ html += `
 
 decks.forEach(d => {
 
-  const swissTotal = d.swissWins + d.swissLosses;
-  const swissWRDeck = swissTotal ? ((d.swissWins / swissTotal) * 100).toFixed(1) : "0.0";
+  const swissTotal =
+    d.swissWins + d.swissLosses;
 
-  const totalWins = d.swissWins + d.topCuts;
-  const totalLosses = d.swissLosses + d.topCuts;
-  const overallTotal = totalWins + totalLosses;
-  const overallWRDeck = overallTotal ? ((totalWins / overallTotal) * 100).toFixed(1) : "0.0";
+  const swissWRDeck =
+    swissTotal
+      ? ((d.swissWins / swissTotal) * 100).toFixed(1)
+      : "0.0";
+
+  const overallTotal =
+    d.totalWins + d.totalLosses;
+
+  const overallWRDeck =
+    overallTotal
+      ? ((d.totalWins / overallTotal) * 100).toFixed(1)
+      : "0.0";
 
   html += `
 <tr>
@@ -428,12 +482,33 @@ html += `
 <th>Position</th>
 <th>Deck</th>
 <th>Swiss Wins</th>
+<th>Swiss WR</th>
+<th>Overall WR</th>
+<th>Top Cut</th>
 <th>Points</th>
 <th>Comments</th>
 </tr>
 `;
 
 episodesSorted.forEach(ep => {
+
+  const swissTotal =
+    (ep.swissWins || 0) +
+    (ep.swissLosses || 0);
+
+  const swissWR =
+    swissTotal
+      ? ((ep.swissWins / swissTotal) * 100).toFixed(1)
+      : "0.0";
+
+  const total =
+    (ep.totalWins || 0) +
+    (ep.totalLosses || 0);
+
+  const overallWR =
+    total
+      ? ((ep.totalWins / total) * 100).toFixed(1)
+      : "0.0";
 
   html += `
 <tr>
@@ -442,6 +517,9 @@ episodesSorted.forEach(ep => {
 <td>${ep.placement}</td>
 <td>${ep.set}</td>
 <td>${ep.swissWins}</td>
+<td>${swissWR}%</td>
+<td>${overallWR}%</td>
+<td>${ep.cutReached ? "Yes" : "No"}</td>
 <td class="points">${ep.points.toFixed(1)}</td>
 <td class="comment">${ep.comment || ""}</td>
 </tr>
@@ -451,7 +529,7 @@ episodesSorted.forEach(ep => {
 html += `</table></div></div>`;
 
 /* =========================
-   GRAPH (FIXED)
+   GRAPH
 ========================= */
 
 html += `
