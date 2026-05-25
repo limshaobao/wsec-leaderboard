@@ -283,6 +283,7 @@ fetch(API_URL + "?player=" + encodeURIComponent(playerName))
             <th>Episode</th>
             <th>Shop</th>
             <th>Deck</th>
+            <th>Swiss Wins</th>
             <th>Points</th>
             <th>Comments</th>
           </tr>
@@ -299,6 +300,10 @@ fetch(API_URL + "?player=" + encodeURIComponent(playerName))
 
           <td>${ep.set || "-"}</td>
 
+          <td>
+            ${ep.swissWins ?? "-"}
+          </td>
+          
           <td class="points">
             ${Number(ep.points).toFixed(1)}
           </td>
