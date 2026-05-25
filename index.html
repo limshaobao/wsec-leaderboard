@@ -134,11 +134,12 @@ function changeShop() {
 
     const shopWinners = new Set();
 
-    // collect ALL shop winners (rank 1 in each shop)
-    Object.values(shopData).forEach(shop => {
-      const winner = shop.leaderboard?.[0];
-      if (winner) shopWinners.add(winner.player);
-    });
+Object.values(shopData).forEach(shop => {
+
+  if (shop.finalWinner) {
+    shopWinners.add(shop.finalWinner);
+  }
+});
 
     const top16 = [];
     const rest = [];
@@ -212,9 +213,17 @@ function changeShop() {
 
       let style = "";
 
-      // 🟩 shop winner
-      if (rank === 1) {
+      // 🟩 display/inherited winner
+      if (p.player === shopData[currentShop].finalWinner) {
         style = "background:#b6fcb6; font-weight:bold;";
+      }
+      
+      // optional: outline true top scorer if displaced
+      else if (
+        rank === 1 &&
+        p.player !== shopData[currentShop].finalWinner
+      ) {
+        style = "border:2px solid #ffd700;";
       }
 
       html += `
