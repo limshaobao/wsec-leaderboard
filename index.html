@@ -232,43 +232,15 @@ function renderLeaderboard() {
   }
 
   // =====================================================
-  // SHOP VIEW (FIXED CASCADE SHIFT LOGIC)
+  // SHOP VIEW (BACKEND-DRIVEN UI + GOLD OVERRIDE FIX)
   // =====================================================
   else {
 
     const shop = shopData[currentShop];
-
-    const leaderboard = (shop.leaderboard || [])
-      .slice()
-      .sort((a, b) => (a.shopRank || 999) - (b.shopRank || 999));
-
-    const winner = shop.finalWinner;
+    const ui = shop.ui;
 
     const globalWinner =
       allPlayers.find(p => p.globalRank === 1)?.player;
-
-    const winnerIsGlobalGold = (winner === globalWinner);
-
-    // ----------------------------
-    // BASE RULES
-    // ----------------------------
-    let greenIndex = 0;
-    let blueStart = 1;
-
-    // ----------------------------
-    // CASCADE SHIFT RULE
-    // ONLY if shop winner = global #1
-    // ----------------------------
-    if (winnerIsGlobalGold) {
-      greenIndex = 1; // rank 2 becomes green
-      blueStart = 2;  // ranks 3–4 become blue
-    }
-
-    const greenPlayer = leaderboard[greenIndex];
-
-    const blueSet = new Set();
-    if (leaderboard[blueStart]) blueSet.add(leaderboard[blueStart].player);
-    if (leaderboard[blueStart + 1]) blueSet.add(leaderboard[blueStart + 1].player);
 
     list.forEach(p => {
 
@@ -278,13 +250,18 @@ function renderLeaderboard() {
 
       let style = "";
 
-      // 🟩 GREEN (dynamic)
-      if (greenPlayer && p.player === greenPlayer.player) {
+      // 🥇 GLOBAL #1 ALWAYS GOLD IN THEIR SHOP IF RANK 1 THERE
+      if (p.player === globalWinner && rank === 1) {
+        style = "background:#ffd700;font-weight:bold;";
+      }
+
+      // 🟩 GREEN FROM BACKEND
+      else if (p.player === ui.greenPlayer) {
         style = "background:#b6fcb6;font-weight:bold;";
       }
 
-      // 🟦 BLUE (dynamic)
-      else if (blueSet.has(p.player)) {
+      // 🟦 BLUE FROM BACKEND
+      else if (ui.bluePlayers.includes(p.player)) {
         style = "background:#cfe8ff;";
       }
 
