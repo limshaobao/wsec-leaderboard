@@ -357,7 +357,8 @@ deckMap[d].points += ep.points;
 if (ep.placement == 1) deckMap[d].tops++;
 });
 
-const decks = Object.values(deckMap);
+const decks = Object.values(deckMap)
+  .sort((a, b) => b.usage - a.usage);
 
 html += `
 <div class="card">
@@ -370,6 +371,7 @@ html += `
 <th>Usage</th>
 <th>Swiss Wins</th>
 <th>Swiss Winrate</th>
+<th>Overall Winrate</th>
 <th>Top Cuts</th>
 <th>Tops</th>
 <th>Total Points</th>
@@ -381,12 +383,20 @@ decks.forEach(d => {
 const swissTotal = d.swissWins + d.swissLosses;
 const swissWRDeck = swissTotal ? ((d.swissWins / swissTotal) * 100).toFixed(1) : "0.0";
 
+/* FIX: overall WR per deck */
+const totalWins = d.swissWins + (d.topCuts || 0);
+const totalLosses = d.swissLosses;
+
+const overallTotal = totalWins + totalLosses;
+const overallWRDeck = overallTotal ? ((totalWins / overallTotal) * 100).toFixed(1) : "0.0";
+
 html += `
 <tr>
 <td>${d.deck}</td>
 <td>${d.usage}</td>
 <td>${d.swissWins}</td>
 <td>${swissWRDeck}%</td>
+<td>${overallWRDeck}%</td>
 <td>${d.topCuts}</td>
 <td>${d.tops}</td>
 <td>${d.points.toFixed(1)}</td>
@@ -434,42 +444,50 @@ html += `
 html += `</table></div></div>`;
 
 /* ============================
-   GRAPH (STRICT CHRONOLOGICAL)
+   GRAPH (BEST PER EPISODE ONLY)
    ============================ */
-html += `
-<div class="card">
-<h2>Best Episode Progression</h2>
-<div class="chart-container">
-<canvas id="chart"></canvas>
-</div>
-</div>
-`;
 
-document.getElementById("content").innerHTML = html;
+/* Build clean best-per-episode map */
+const episodeMap = {};
 
+p.episodes.forEach(ep => {
+
+  const key = ep.episode;
+
+  // keep only highest scoring entry per episode
+  if (!episodeMap[key] || ep.points > episodeMap[key].points) {
+    episodeMap[key] = {
+      episode: ep.episode,
+      points: ep.points
+    };
+  }
+
+});
+
+/* Convert + enforce strict chronological order */
+const graphData = Object.values(episodeMap)
+  .sort((a, b) =>
+    Number(a.episode.toString().replace(/\D/g, '')) -
+    Number(b.episode.toString().replace(/\D/g, ''))
+  );
+
+/* Render chart */
 const ctx = document.getElementById("chart");
 
 new Chart(ctx, {
-type: "line",
-data: {
-labels: episodesSorted.map(x => x.episode),
-datasets: [{
-label: "Episode Score",
-data: episodesSorted.map(x => x.points),
-tension: 0.25
-}]
-},
-options: {
-responsive: true,
-maintainAspectRatio: false
-}
-});
-
-})
-.catch(err => {
-console.error(err);
-document.getElementById("content").innerHTML =
-"<h2>Failed to load player</h2>";
+  type: "line",
+  data: {
+    labels: graphData.map(x => x.episode),
+    datasets: [{
+      label: "Best Episode Score",
+      data: graphData.map(x => x.points),
+      tension: 0.25
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false
+  }
 });
 
 </script>
