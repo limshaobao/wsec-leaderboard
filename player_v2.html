@@ -282,9 +282,8 @@ html += `
 </div>
 </div>
 `;
-
 /* =========================
-   TOP SCORES PER EPISODE (FIXED)
+   TOP SCORES PER EPISODE (TOP 5, SORTED BY POINTS)
 ========================= */
 html += `
 <div class="card">
@@ -304,14 +303,25 @@ html += `
 </tr>
 `;
 
-Object.values(episodeBestMap).forEach(ep => {
+Object.values(episodeBestMap)
+  .sort((a, b) => (b.points || 0) - (a.points || 0))
+  .slice(0, 5)
+  .forEach(ep => {
 
-  const epSwissTotal = (ep.swissWins || 0) + (ep.swissLosses || 0);
-  const epSwissWR = epSwissTotal ? ((ep.swissWins / epSwissTotal) * 100).toFixed(1) : "0.0";
+    const epSwissTotal = (ep.swissWins || 0) + (ep.swissLosses || 0);
+    const epSwissWR = epSwissTotal
+      ? ((ep.swissWins / epSwissTotal) * 100).toFixed(1)
+      : "0.0";
 
-  const epWR = getEpisodeWR(ep);
+    const wins = (ep.swissWins || 0) + (ep.topCutWins || 0);
+    const losses = (ep.swissLosses || 0) + (ep.topCutLosses || 0);
+    const total = wins + losses;
 
-  html += `
+    const epWR = total
+      ? ((wins / total) * 100).toFixed(1)
+      : "0.0";
+
+    html += `
 <tr>
 <td>${ep.episode}</td>
 <td>${ep.shop}</td>
@@ -323,7 +333,7 @@ Object.values(episodeBestMap).forEach(ep => {
 <td class="points">${ep.points.toFixed(1)}</td>
 </tr>
 `;
-});
+  });
 
 html += `</table></div></div>`;
 
