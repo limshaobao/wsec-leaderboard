@@ -210,12 +210,27 @@ fetch(API_URL + "?player=" + encodeURIComponent(playerName))
     `;
 
     // -------------------------
-    // NEW: BEST EPISODE SCORES (TOP 5 BASIS)
+    // BEST EPISODE SUMMARY (ONE ROW PER EPISODE)
     // -------------------------
 
-    const bestEpisodes = [...p.episodes]
-      .sort((a, b) => b.points - a.points);
+    const episodeBestMap = {};
 
+    p.episodes.forEach(ep => {
+
+    const key = ep.episode;
+
+    if (!episodeBestMap[key]) {
+    episodeBestMap[key] = { ...ep };
+    } else {
+    // keep only best score per episode
+      if (ep.points > episodeBestMap[key].points) {
+      episodeBestMap[key] = { ...ep };
+        }
+      }
+    });
+
+const bestEpisodes = Object.values(episodeBestMap)
+  .sort((a, b) => b.points - a.points);
     html += `
       <div class="card">
 
