@@ -177,8 +177,11 @@ function renderLeaderboard() {
     const shopWinners = new Set();
 
     Object.values(shopData).forEach(shop => {
-      if (shop.finalWinner) {
-        shopWinners.add(shop.finalWinner);
+    
+      const ui = shop.ui || {};
+    
+      if (ui.greenPlayer) {
+        shopWinners.add(ui.greenPlayer);
       }
     });
 
