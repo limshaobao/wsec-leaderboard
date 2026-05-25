@@ -105,11 +105,8 @@ tr:nth-child(even) { background: #fafafa; }
 <body>
 
 <div class="container">
-
 <a class="back-link" href="./index.html">← Back to Leaderboard</a>
-
 <div id="content">Loading player...</div>
-
 </div>
 
 <script>
@@ -139,17 +136,17 @@ const episodesSorted = [...p.episodes].sort((a, b) =>
 );
 
 /* =========================
-   EPISODE WINRATE
+   EPISODE WINRATE (FIXED)
 ========================= */
 function getEpisodeWR(ep) {
-  const wins = (ep.swissWins || 0) + (ep.topCutWins || 0);
-  const losses = (ep.swissLosses || 0) + (ep.topCutLosses || 0);
+  const wins = ep.swissWins || 0;
+  const losses = ep.swissLosses || 0;
   const total = wins + losses;
   return total ? ((wins / total) * 100).toFixed(1) : "0.0";
 }
 
 /* =========================
-   BEST PER EPISODE (FIXED SOURCE OF TRUTH)
+   BEST PER EPISODE
 ========================= */
 const episodeBestMap = {};
 
@@ -157,7 +154,6 @@ p.episodes.forEach(ep => {
 
   const key = ep.episode;
 
-  // keep ONLY highest scoring entry per episode
   if (!episodeBestMap[key] || ep.points > episodeBestMap[key].points) {
     episodeBestMap[key] = {
       episode: ep.episode,
@@ -166,8 +162,6 @@ p.episodes.forEach(ep => {
       set: ep.set,
       swissWins: ep.swissWins,
       swissLosses: ep.swissLosses,
-      topCutWins: ep.topCutWins,
-      topCutLosses: ep.topCutLosses,
       points: ep.points,
       comment: ep.comment
     };
@@ -180,13 +174,13 @@ const graphData = Object.values(episodeBestMap).sort((a, b) =>
 );
 
 /* =========================
-   GLOBAL WINRATE
+   GLOBAL WINRATE (FIXED)
 ========================= */
-const totalGames = (p.totalWins || 0) + (p.totalLosses || 0);
-const overallWR = totalGames ? ((p.totalWins / totalGames) * 100).toFixed(1) : "0.0";
+const totalGames = (p.totalSwissWins || 0) + (p.totalSwissLosses || 0);
+const overallWR = totalGames ? ((p.totalSwissWins / totalGames) * 100).toFixed(1) : "0.0";
 
-const swissGames = (p.totalSwissWins || 0) + (p.totalSwissLosses || 0);
-const swissWR = swissGames ? ((p.totalSwissWins / swissGames) * 100).toFixed(1) : "0.0";
+const swissGames = totalGames;
+const swissWR = overallWR;
 
 /* =========================
    HEADER
@@ -251,7 +245,7 @@ html += `
 `;
 
 /* =========================
-   MATCH RECORD
+   MATCH RECORD (FIXED)
 ========================= */
 html += `
 <div class="card">
@@ -269,21 +263,12 @@ html += `
 <div class="stat-label">Swiss Losses</div>
 </div>
 
-<div class="stat">
-<div class="stat-value">${p.totalTopCutWins}</div>
-<div class="stat-label">Top Cut Wins</div>
-</div>
-
-<div class="stat">
-<div class="stat-value">${p.totalTopCutLosses}</div>
-<div class="stat-label">Top Cut Losses</div>
-</div>
-
 </div>
 </div>
 `;
+
 /* =========================
-   TOP SCORES PER EPISODE (TOP 5, SORTED BY POINTS)
+   TOP SCORES PER EPISODE
 ========================= */
 html += `
 <div class="card">
@@ -298,7 +283,6 @@ html += `
 <th>Deck</th>
 <th>Swiss Wins</th>
 <th>Swiss Winrate</th>
-<th>Overall Winrate</th>
 <th>Points</th>
 </tr>
 `;
@@ -313,14 +297,6 @@ Object.values(episodeBestMap)
       ? ((ep.swissWins / epSwissTotal) * 100).toFixed(1)
       : "0.0";
 
-    const wins = (ep.swissWins || 0) + (ep.topCutWins || 0);
-    const losses = (ep.swissLosses || 0) + (ep.topCutLosses || 0);
-    const total = wins + losses;
-
-    const epWR = total
-      ? ((wins / total) * 100).toFixed(1)
-      : "0.0";
-
     html += `
 <tr>
 <td>${ep.episode}</td>
@@ -329,7 +305,6 @@ Object.values(episodeBestMap)
 <td>${ep.set}</td>
 <td>${ep.swissWins}</td>
 <td>${epSwissWR}%</td>
-<td>${epWR}%</td>
 <td class="points">${ep.points.toFixed(1)}</td>
 </tr>
 `;
@@ -338,7 +313,7 @@ Object.values(episodeBestMap)
 html += `</table></div></div>`;
 
 /* =========================
-   FAVOURED DECKS
+   FAVOURED DECKS (FIXED)
 ========================= */
 const deckMap = {};
 
@@ -352,8 +327,6 @@ p.episodes.forEach(ep => {
       usage: 0,
       swissWins: 0,
       swissLosses: 0,
-      topCuts: 0,
-      tops: 0,
       points: 0
     };
   }
@@ -361,10 +334,7 @@ p.episodes.forEach(ep => {
   deckMap[d].usage++;
   deckMap[d].swissWins += ep.swissWins;
   deckMap[d].swissLosses += ep.swissLosses;
-  deckMap[d].topCuts += ep.topCutWins > 0 ? 1 : 0;
   deckMap[d].points += ep.points;
-
-  if (ep.placement == 1) deckMap[d].tops++;
 });
 
 const decks = Object.values(deckMap).sort((a, b) => b.usage - a.usage);
@@ -380,9 +350,6 @@ html += `
 <th>Usage</th>
 <th>Swiss Wins</th>
 <th>Swiss Winrate</th>
-<th>Overall Winrate</th>
-<th>Top Cuts</th>
-<th>Tops</th>
 <th>Total Points</th>
 </tr>
 `;
@@ -392,20 +359,12 @@ decks.forEach(d => {
   const swissTotal = d.swissWins + d.swissLosses;
   const swissWRDeck = swissTotal ? ((d.swissWins / swissTotal) * 100).toFixed(1) : "0.0";
 
-  const totalWins = d.swissWins + d.topCuts;
-  const totalLosses = d.swissLosses + d.topCuts;
-  const overallTotal = totalWins + totalLosses;
-  const overallWRDeck = overallTotal ? ((totalWins / overallTotal) * 100).toFixed(1) : "0.0";
-
   html += `
 <tr>
 <td>${d.deck}</td>
 <td>${d.usage}</td>
 <td>${d.swissWins}</td>
 <td>${swissWRDeck}%</td>
-<td>${overallWRDeck}%</td>
-<td>${d.topCuts}</td>
-<td>${d.tops}</td>
 <td>${d.points.toFixed(1)}</td>
 </tr>
 `;
@@ -451,7 +410,7 @@ episodesSorted.forEach(ep => {
 html += `</table></div></div>`;
 
 /* =========================
-   GRAPH (FIXED)
+   GRAPH
 ========================= */
 
 html += `
@@ -465,9 +424,7 @@ html += `
 
 document.getElementById("content").innerHTML = html;
 
-/* IMPORTANT: safe chart init AFTER DOM injection */
-const canvas = document.getElementById("chart");
-const ctx = canvas.getContext("2d");
+const ctx = document.getElementById("chart").getContext("2d");
 
 new Chart(ctx, {
   type: "line",
