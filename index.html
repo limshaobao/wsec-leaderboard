@@ -57,6 +57,21 @@
       margin-bottom: 10px;
       font-size: 14px;
     }
+
+    .shop-button {
+      display: none;
+      background: #005bbb;
+      color: white !important;
+      padding: 10px 18px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .shop-button:hover {
+      background: #004799;
+      text-decoration: none;
+    }
   </style>
 </head>
 
@@ -67,11 +82,26 @@
   <h1>2026 WS European Championship - UK League Table</h1>
 
   <div id="shopFilter"></div>
+
+  <div style="margin:15px 0;">
+
+    <a
+      id="shopPageLink"
+      class="shop-button"
+      href="#"
+      target="_blank"
+    >
+      Open Full Shop Page
+    </a>
+
+  </div>
+
   <div id="leaderboard">Loading...</div>
 
 </div>
 
 <script>
+
 let allPlayers = [];
 let shopData = {};
 let currentShop = "GLOBAL";
@@ -84,18 +114,31 @@ fetch("https://script.google.com/macros/s/AKfycbzuWLCBe3q12dR8zlRYmUx0QWCutjMZva
     allPlayers = data.players;
     shopData = data.shops;
 
-    renderLeaderboard();
     buildShopDropdown();
+    renderLeaderboard();
   });
 
 function buildShopDropdown() {
+
   const shops = Object.keys(shopData);
 
-  let html = `<select id="shopSelect" onchange="changeShop()">`;
-  html += `<option value="GLOBAL">Global Leaderboard</option>`;
+  let html = `
+    <select id="shopSelect" onchange="changeShop()">
+  `;
+
+  html += `
+    <option value="GLOBAL">
+      Global Leaderboard
+    </option>
+  `;
 
   shops.forEach(s => {
-    html += `<option value="${s}">${s}</option>`;
+
+    html += `
+      <option value="${s}">
+        ${s}
+      </option>
+    `;
   });
 
   html += `</select>`;
@@ -104,22 +147,54 @@ function buildShopDropdown() {
 }
 
 function changeShop() {
-  currentShop = document.getElementById("shopSelect").value;
+
+  currentShop =
+    document.getElementById("shopSelect").value;
+
   renderLeaderboard();
 }
 
-  function renderLeaderboard() {
+function renderLeaderboard() {
 
+  // -----------------------------
+  // SHOP PAGE BUTTON
+  // -----------------------------
+  const shopLink =
+    document.getElementById("shopPageLink");
+
+  if (currentShop !== "GLOBAL") {
+
+    shopLink.style.display = "inline-block";
+
+    shopLink.href =
+      "./shop.html?shop=" +
+      encodeURIComponent(currentShop);
+
+  } else {
+
+    shopLink.style.display = "none";
+  }
+
+  // -----------------------------
+  // DATA SOURCE
+  // -----------------------------
   let list = [];
 
   if (currentShop === "GLOBAL") {
+
     list = allPlayers;
+
   } else {
+
     list = shopData[currentShop].leaderboard;
   }
 
+  // -----------------------------
+  // TABLE HEADER
+  // -----------------------------
   let html = `
     <table>
+
       <tr>
         <th>Rank</th>
         <th>Player</th>
@@ -129,61 +204,62 @@ function changeShop() {
   `;
 
   // -----------------------------
-  // ONLY GLOBAL NEEDS COMPLEX LOGIC
+  // GLOBAL VIEW
   // -----------------------------
   if (currentShop === "GLOBAL") {
 
     const shopWinners = new Set();
 
-Object.values(shopData).forEach(shop => {
+    Object.values(shopData).forEach(shop => {
 
-  if (shop.finalWinner) {
-    shopWinners.add(shop.finalWinner);
-  }
-});
+      if (shop.finalWinner) {
+        shopWinners.add(shop.finalWinner);
+      }
+    });
 
-    const top16 = [];
-    const rest = [];
-
+    // dynamic blue range
+    const eligible = [];
     list.forEach(p => {
 
       if (p.globalRank === 1) return;
+      if (shopWinners.has(p.player)) return;
 
-      if (shopWinners.has(p.player)) {
-        return;
-      }
-
-      top16.push(p);
+      eligible.push(p);
     });
 
-    // sort top16 by global rank (stable)
-    top16.sort((a, b) => a.globalRank - b.globalRank);
+    eligible.sort((a, b) =>
+      a.globalRank - b.globalRank
+    );
 
-    const blueGroup = top16.slice(0, 16);
-
-    const blueSet = new Set(blueGroup.map(p => p.player));
+    const blueGroup = eligible.slice(0, 16);
+    const blueSet = new Set(
+      blueGroup.map(p => p.player)
+    );
 
     list.forEach(p => {
 
       const rank = p.globalRank;
-      const points = p.totalPoints.toFixed(1);
-      const episodes = p.episodesPlayed ?? "-";
+      const points =
+        Number(p.totalPoints).toFixed(1);
+      const episodes =
+        p.episodesPlayed ?? "-";
 
       let style = "";
 
-      // 🥇 GLOBAL #1
+      // 🥇 GLOBAL WINNER
       if (rank === 1) {
-        style = "background:#ffd700; font-weight:bold;";
+        style =
+          "background:#ffd700;font-weight:bold;";
       }
-
-      // 🟩 SHOP WINNERS (excluding global #1)
+      // 🟩 SHOP WINNERS
       else if (shopWinners.has(p.player)) {
-        style = "background:#b6fcb6; font-weight:bold;";
+        style =
+          "background:#b6fcb6;font-weight:bold;";
       }
-
-      // 🟦 DYNAMIC BLUE RANGE (next 16 after exclusions)
+      // 🟦 NEXT 16
       else if (blueSet.has(p.player)) {
-        style = "background:#cfe8ff;";
+        style =
+          "background:#cfe8ff;";
       }
 
       html += `
@@ -194,54 +270,71 @@ Object.values(shopData).forEach(shop => {
               ${p.player}
             </a>
           </td>
+
           <td>${points}</td>
           <td>${episodes}</td>
         </tr>
       `;
     });
-
   }
 
   // -----------------------------
-  // SHOP VIEW (UNCHANGED LOGIC)
+  // SHOP VIEW
   // -----------------------------
   else {
 
-    
     list.forEach(p => {
 
       const rank = p.shopRank;
-      const points = p.totalPoints.toFixed(1);
-      const episodes = p.episodesPlayed ?? "-";
+
+      const points =
+        Number(p.totalPoints).toFixed(1);
+
+      const episodes =
+        p.episodesPlayed ?? "-";
 
       let style = "";
 
-      // 🟩 inherited / display winner
-      if (p.player === shopData[currentShop].finalWinner) {
-        style = "background:#b6fcb6; font-weight:bold;";
+      // inherited winner
+      if (
+        p.player ===
+        shopData[currentShop].finalWinner
+      ) {
+
+        style =
+          "background:#b6fcb6;font-weight:bold;";
       }
 
-      // 🟨 true rank 1 but displaced by pass-down
+      // displaced actual rank 1
       else if (
         rank === 1 &&
-        p.player !== shopData[currentShop].finalWinner
+        p.player !==
+          shopData[currentShop].finalWinner
       ) {
-        style = "background:#fff3cd; font-weight:bold;";
+
+        style =
+          "background:#fff3cd;font-weight:bold;";
       }
 
       html += `
         <tr style="${style}">
+
           <td>${rank}</td>
 
           <td>
+
             <a href="./player.html?player=${encodeURIComponent(p.player)}">
+
               ${p.player}
+
             </a>
+
           </td>
 
           <td>${points}</td>
 
           <td>${episodes}</td>
+
         </tr>
       `;
     });
@@ -249,8 +342,10 @@ Object.values(shopData).forEach(shop => {
 
   html += `</table>`;
 
-  document.getElementById("leaderboard").innerHTML = html;
+  document.getElementById("leaderboard").innerHTML =
+    html;
 }
+
 </script>
 
 </body>
