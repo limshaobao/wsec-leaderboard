@@ -90,20 +90,31 @@ if (!player) {
       // ----------------------------
       // CALCULATIONS
       // ----------------------------
-
+      
       let total = 0;
       let best = 0;
-      let episodes = rows.length;
-
+      
+      // track unique episodes properly
+      let episodeSet = new Set();
+      
       rows.forEach(r => {
+      
         const p = parseFloat(r.points);
+        const ep = r.episodes;
+      
         if (!isNaN(p)) {
           total += p;
           if (p > best) best = p;
         }
+      
+        if (ep !== undefined && ep !== null && ep !== "") {
+          episodeSet.add(ep);
+        }
       });
-
-      let avg = total / episodes;
+      
+      let episodes = episodeSet.size;
+      
+      let avg = episodes > 0 ? total / episodes : 0;
 
       // ----------------------------
       // UI OUTPUT
