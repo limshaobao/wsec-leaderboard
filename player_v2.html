@@ -131,55 +131,117 @@ if (!p) {
 }
 
 /* =========================
+   HARD FIXES
+========================= */
+
+function getSwissRounds(playerCount) {
+  if (playerCount <= 8) return 3;
+  if (playerCount <= 16) return 4;
+  if (playerCount <= 32) return 5;
+  if (playerCount <= 64) return 6;
+  if (playerCount <= 128) return 7;
+  return 8;
+}
+
+function getTopCutSize(playerCount) {
+  if (playerCount >= 129) return 64;
+  if (playerCount >= 65) return 32;
+  if (playerCount >= 33) return 16;
+  if (playerCount >= 17) return 8;
+  if (playerCount >= 9) return 4;
+  return 0;
+}
+
+/* =========================
+   NORMALISE EPISODES
+========================= */
+
+p.episodes = p.episodes.map(ep => {
+
+  const playerCount = Number(ep.playerCount || 0);
+
+  const swissRounds = getSwissRounds(playerCount);
+
+  const swissWins = Number(ep.swissWins || 0);
+
+  const swissLosses =
+    Math.max(0, swissRounds - swissWins);
+
+  const topCutSize =
+    getTopCutSize(playerCount);
+
+  const placement =
+    Number(ep.placement || 999);
+
+  const cutReached =
+    topCutSize > 0 &&
+    placement <= topCutSize;
+
+  return {
+    ...ep,
+
+    swissRounds,
+    swissLosses,
+
+    topCutSize,
+    cutReached
+  };
+});
+
+/* =========================
+   RECALCULATE GLOBALS
+========================= */
+
+let totalSwissWins = 0;
+let totalSwissLosses = 0;
+
+let totalWins = 0;
+let totalLosses = 0;
+
+let topCuts = 0;
+
+p.episodes.forEach(ep => {
+
+  totalSwissWins += Number(ep.swissWins || 0);
+  totalSwissLosses += Number(ep.swissLosses || 0);
+
+  totalWins += Number(ep.totalWins || 0);
+  totalLosses += Number(ep.totalLosses || 0);
+
+  if (ep.cutReached) {
+    topCuts++;
+  }
+});
+
+p.totalSwissWins = totalSwissWins;
+p.totalSwissLosses = totalSwissLosses;
+
+p.totalWins = totalWins;
+p.totalLosses = totalLosses;
+
+p.topCuts = topCuts;
+
+/* =========================
    EPISODE SORT
 ========================= */
+
 const episodesSorted = [...p.episodes].sort((a, b) =>
   Number(a.episode.toString().replace(/\D/g, '')) -
   Number(b.episode.toString().replace(/\D/g, ''))
 );
 
 /* =========================
-   EPISODE WINRATE
+   BEST PER EPISODE
 ========================= */
-function getEpisodeWR(ep) {
-  const wins = (ep.totalWins || 0);
-  const losses = (ep.totalLosses || 0);
-  const total = wins + losses;
-  return total ? ((wins / total) * 100).toFixed(1) : "0.0";
-}
 
-/* =========================
-   BEST PER EPISODE (FIXED SOURCE OF TRUTH)
-========================= */
 const episodeBestMap = {};
 
 p.episodes.forEach(ep => {
 
   const key = ep.episode;
 
-  // keep ONLY highest scoring entry per episode
   if (!episodeBestMap[key] || ep.points > episodeBestMap[key].points) {
-    episodeBestMap[key] = {
-      episode: ep.episode,
-      shop: ep.shop,
-      placement: ep.placement,
-      set: ep.set,
-
-      swissWins: ep.swissWins,
-      swissLosses: ep.swissLosses,
-
-      topCutWins: ep.topCutWins,
-      topCutLosses: ep.topCutLosses,
-
-      totalWins: ep.totalWins,
-      totalLosses: ep.totalLosses,
-
-      topCutSize: ep.topCutSize,
-      cutReached: ep.cutReached,
-
-      points: ep.points,
-      comment: ep.comment
-    };
+    episodeBestMap[key] = ep;
   }
 });
 
@@ -189,12 +251,11 @@ const graphData = Object.values(episodeBestMap).sort((a, b) =>
 );
 
 /* =========================
-   GLOBAL WINRATE
+   GLOBAL WINRATES
 ========================= */
 
 const totalGames =
-  (p.totalWins || 0) +
-  (p.totalLosses || 0);
+  p.totalWins + p.totalLosses;
 
 const overallWR =
   totalGames
@@ -202,8 +263,7 @@ const overallWR =
     : "0.0";
 
 const swissGames =
-  (p.totalSwissWins || 0) +
-  (p.totalSwissLosses || 0);
+  p.totalSwissWins + p.totalSwissLosses;
 
 const swissWR =
   swissGames
@@ -213,6 +273,7 @@ const swissWR =
 /* =========================
    HEADER
 ========================= */
+
 let html = `
 <div class="card">
 
@@ -247,6 +308,7 @@ let html = `
 /* =========================
    PERFORMANCE
 ========================= */
+
 html += `
 <div class="card">
 <h2>Performance Overview</h2>
@@ -275,6 +337,7 @@ html += `
 /* =========================
    MATCH RECORD
 ========================= */
+
 html += `
 <div class="card">
 <h2>Match Record</h2>
@@ -306,8 +369,9 @@ html += `
 `;
 
 /* =========================
-   TOP SCORES PER EPISODE
+   TOP SCORES
 ========================= */
+
 html += `
 <div class="card">
 <h2>Top Scores Per Episode</h2>
@@ -328,139 +392,37 @@ html += `
 `;
 
 Object.values(episodeBestMap)
-  .sort((a, b) => (b.points || 0) - (a.points || 0))
-  .slice(0, 5)
-  .forEach(ep => {
+.sort((a, b) => (b.points || 0) - (a.points || 0))
+.slice(0, 5)
+.forEach(ep => {
 
-    const epSwissTotal =
-      (ep.swissWins || 0) +
-      (ep.swissLosses || 0);
+  const swissTotal =
+    ep.swissWins + ep.swissLosses;
 
-    const epSwissWR =
-      epSwissTotal
-        ? ((ep.swissWins / epSwissTotal) * 100).toFixed(1)
-        : "0.0";
+  const swissWR =
+    swissTotal
+      ? ((ep.swissWins / swissTotal) * 100).toFixed(1)
+      : "0.0";
 
-    const wins = (ep.totalWins || 0);
-    const losses = (ep.totalLosses || 0);
+  const total =
+    ep.totalWins + ep.totalLosses;
 
-    const total = wins + losses;
+  const overallWR =
+    total
+      ? ((ep.totalWins / total) * 100).toFixed(1)
+      : "0.0";
 
-    const epWR =
-      total
-        ? ((wins / total) * 100).toFixed(1)
-        : "0.0";
-
-    html += `
+  html += `
 <tr>
 <td>${ep.episode}</td>
 <td>${ep.shop}</td>
 <td>${ep.placement}</td>
 <td>${ep.set}</td>
 <td>${ep.swissWins}</td>
-<td>${epSwissWR}%</td>
-<td>${epWR}%</td>
+<td>${swissWR}%</td>
+<td>${overallWR}%</td>
 <td>${ep.cutReached ? "Yes" : "No"}</td>
 <td class="points">${ep.points.toFixed(1)}</td>
-</tr>
-`;
-  });
-
-html += `</table></div></div>`;
-
-/* =========================
-   FAVOURED DECKS
-========================= */
-const deckMap = {};
-
-p.episodes.forEach(ep => {
-
-  const d = ep.set || "Unknown";
-
-  if (!deckMap[d]) {
-    deckMap[d] = {
-      deck: d,
-      usage: 0,
-
-      swissWins: 0,
-      swissLosses: 0,
-
-      totalWins: 0,
-      totalLosses: 0,
-
-      topCuts: 0,
-      tops: 0,
-      points: 0
-    };
-  }
-
-  deckMap[d].usage++;
-
-  deckMap[d].swissWins += (ep.swissWins || 0);
-  deckMap[d].swissLosses += (ep.swissLosses || 0);
-
-  deckMap[d].totalWins += (ep.totalWins || 0);
-  deckMap[d].totalLosses += (ep.totalLosses || 0);
-
-  if (ep.cutReached) {
-    deckMap[d].topCuts++;
-  }
-
-  deckMap[d].points += ep.points;
-
-  if (ep.placement == 1) {
-    deckMap[d].tops++;
-  }
-});
-
-const decks = Object.values(deckMap).sort((a, b) => b.usage - a.usage);
-
-html += `
-<div class="card">
-<h2>Favoured Decks</h2>
-
-<div class="table-wrap">
-<table>
-<tr>
-<th>Deck</th>
-<th>Usage</th>
-<th>Swiss Wins</th>
-<th>Swiss Winrate</th>
-<th>Overall Winrate</th>
-<th>Top Cuts</th>
-<th>Tops</th>
-<th>Total Points</th>
-</tr>
-`;
-
-decks.forEach(d => {
-
-  const swissTotal =
-    d.swissWins + d.swissLosses;
-
-  const swissWRDeck =
-    swissTotal
-      ? ((d.swissWins / swissTotal) * 100).toFixed(1)
-      : "0.0";
-
-  const overallTotal =
-    d.totalWins + d.totalLosses;
-
-  const overallWRDeck =
-    overallTotal
-      ? ((d.totalWins / overallTotal) * 100).toFixed(1)
-      : "0.0";
-
-  html += `
-<tr>
-<td>${d.deck}</td>
-<td>${d.usage}</td>
-<td>${d.swissWins}</td>
-<td>${swissWRDeck}%</td>
-<td>${overallWRDeck}%</td>
-<td>${d.topCuts}</td>
-<td>${d.tops}</td>
-<td>${d.points.toFixed(1)}</td>
 </tr>
 `;
 });
@@ -470,6 +432,7 @@ html += `</table></div></div>`;
 /* =========================
    EPISODE HISTORY
 ========================= */
+
 html += `
 <div class="card">
 <h2>Episode History</h2>
@@ -493,8 +456,7 @@ html += `
 episodesSorted.forEach(ep => {
 
   const swissTotal =
-    (ep.swissWins || 0) +
-    (ep.swissLosses || 0);
+    ep.swissWins + ep.swissLosses;
 
   const swissWR =
     swissTotal
@@ -502,8 +464,7 @@ episodesSorted.forEach(ep => {
       : "0.0";
 
   const total =
-    (ep.totalWins || 0) +
-    (ep.totalLosses || 0);
+    ep.totalWins + ep.totalLosses;
 
   const overallWR =
     total
@@ -543,7 +504,6 @@ html += `
 
 document.getElementById("content").innerHTML = html;
 
-/* IMPORTANT: safe chart init AFTER DOM injection */
 const canvas = document.getElementById("chart");
 const ctx = canvas.getContext("2d");
 
