@@ -475,6 +475,85 @@ html += `
 </div>
 `;
 
+
+/* =========================
+   FAVOURED DECKS
+========================= */
+const deckMap = {};
+
+p.episodes.forEach(ep => {
+
+  const d = ep.set || "Unknown";
+
+  if (!deckMap[d]) {
+    deckMap[d] = {
+      deck: d,
+      usage: 0,
+      swissWins: 0,
+      swissLosses: 0,
+      topCuts: 0,
+      tops: 0,
+      points: 0
+    };
+  }
+
+  deckMap[d].usage++;
+  deckMap[d].swissWins += ep.swissWins;
+  deckMap[d].swissLosses += ep.swissLosses;
+  deckMap[d].topCuts += ep.topCutWins > 0 ? 1 : 0;
+  deckMap[d].points += ep.points;
+
+  if (ep.placement == 1) deckMap[d].tops++;
+});
+
+const decks = Object.values(deckMap).sort((a, b) => b.usage - a.usage);
+
+html += `
+<div class="card">
+<h2>Favoured Decks</h2>
+
+<div class="table-wrap">
+<table>
+<tr>
+<th>Deck</th>
+<th>Usage</th>
+<th>Swiss Wins</th>
+<th>Swiss Winrate</th>
+<th>Overall Winrate</th>
+<th>Top Cuts</th>
+<th>Tops</th>
+<th>Total Points</th>
+</tr>
+`;
+
+decks.forEach(d => {
+
+  const swissTotal = d.swissWins + d.swissLosses;
+  const swissWRDeck = swissTotal ? ((d.swissWins / swissTotal) * 100).toFixed(1) : "0.0";
+
+  const totalWins = d.swissWins + d.topCuts;
+  const totalLosses = d.swissLosses + d.topCuts;
+  const overallTotal = totalWins + totalLosses;
+  const overallWRDeck = overallTotal ? ((totalWins / overallTotal) * 100).toFixed(1) : "0.0";
+
+  html += `
+<tr>
+<td>${d.deck}</td>
+<td>${d.usage}</td>
+<td>${d.swissWins}</td>
+<td>${swissWRDeck}%</td>
+<td>${overallWRDeck}%</td>
+<td>${d.topCuts}</td>
+<td>${d.tops}</td>
+<td>${d.points.toFixed(1)}</td>
+</tr>
+`;
+});
+
+html += `</table></div></div>`;
+
+
+  
 /* =========================
    EPISODE HISTORY
 ========================= */
