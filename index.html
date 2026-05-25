@@ -206,32 +206,41 @@ Object.values(shopData).forEach(shop => {
   // -----------------------------
   else {
 
+    
     list.forEach(p => {
 
       const rank = p.shopRank;
       const points = p.totalPoints.toFixed(1);
+      const episodes = p.episodesPlayed ?? "-";
 
       let style = "";
 
-      // 🟩 display/inherited winner
+      // 🟩 inherited / display winner
       if (p.player === shopData[currentShop].finalWinner) {
         style = "background:#b6fcb6; font-weight:bold;";
       }
-      
-      // optional: outline true top scorer if displaced
+
+      // 🟨 true rank 1 but displaced by pass-down
       else if (
         rank === 1 &&
         p.player !== shopData[currentShop].finalWinner
       ) {
-        style = "border:2px solid #ffd700;";
+        style = "background:#fff3cd; font-weight:bold;";
       }
 
       html += `
         <tr style="${style}">
           <td>${rank}</td>
-          <td>${p.player}</td>
+
+          <td>
+            <a href="./player.html?player=${encodeURIComponent(p.player)}">
+              ${p.player}
+            </a>
+          </td>
+
           <td>${points}</td>
-          <td>-</td>
+
+          <td>${episodes}</td>
         </tr>
       `;
     });
