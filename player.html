@@ -203,7 +203,72 @@ fetch(API_URL + "?player=" + encodeURIComponent(playerName))
 
       </div>
     `;
+    
+    // -------------------------
+    // FAVOURED DECKS
+    // -------------------------
 
+    const deckMap = {};
+
+    p.episodes.forEach(ep => {
+
+      const deck = ep.set || "Unknown";
+
+      if (!deckMap[deck]) {
+
+        deckMap[deck] = {
+          deck: deck,
+          usage: 0,
+          points: 0
+        };
+      }
+
+      deckMap[deck].usage += 1;
+
+      deckMap[deck].points += Number(ep.points);
+    });
+
+    const decks = Object.values(deckMap);
+
+    decks.sort((a, b) => b.points - a.points);
+
+    html += `
+      <div class="card">
+
+        <h2>Favoured Decks</h2>
+
+        <table>
+
+          <tr>
+            <th>Deck</th>
+            <th>Usage</th>
+            <th>Total Points</th>
+          </tr>
+    `;
+
+    decks.forEach(d => {
+
+      html += `
+        <tr>
+
+          <td>${d.deck}</td>
+
+          <td>${d.usage}</td>
+
+          <td class="points">
+            ${d.points.toFixed(1)}
+          </td>
+
+        </tr>
+      `;
+    });
+
+    html += `
+        </table>
+
+      </div>
+    `;
+    
     // -------------------------
     // HISTORY TABLE
     // -------------------------
