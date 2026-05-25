@@ -131,7 +131,7 @@ if (!p) {
 }
 
 /* =========================
-   EPISODE SORT (SAFE)
+   EPISODE SORT
 ========================= */
 const episodesSorted = [...p.episodes].sort((a, b) =>
   Number(a.episode.toString().replace(/\D/g, '')) -
@@ -149,21 +149,30 @@ function getEpisodeWR(ep) {
 }
 
 /* =========================
-   BEST PER EPISODE (GRAPH)
+   BEST PER EPISODE (GRAPH + TABLE SOURCE OF TRUTH)
 ========================= */
-const episodeMap = {};
+const episodeBestMap = {};
 
 p.episodes.forEach(ep => {
   const key = ep.episode;
-  if (!episodeMap[key] || ep.points > episodeMap[key].points) {
-    episodeMap[key] = {
+
+  if (!episodeBestMap[key] || ep.points > episodeBestMap[key].points) {
+    episodeBestMap[key] = {
       episode: ep.episode,
-      points: ep.points
+      shop: ep.shop,
+      placement: ep.placement,
+      set: ep.set,
+      swissWins: ep.swissWins,
+      swissLosses: ep.swissLosses,
+      topCutWins: ep.topCutWins,
+      topCutLosses: ep.topCutLosses,
+      points: ep.points,
+      comment: ep.comment
     };
   }
 });
 
-const graphData = Object.values(episodeMap).sort((a, b) =>
+const graphData = Object.values(episodeBestMap).sort((a, b) =>
   Number(a.episode.toString().replace(/\D/g, '')) -
   Number(b.episode.toString().replace(/\D/g, ''))
 );
@@ -273,7 +282,7 @@ html += `
 `;
 
 /* =========================
-   TOP SCORES PER EPISODE
+   TOP SCORES PER EPISODE (FIXED)
 ========================= */
 html += `
 <div class="card">
@@ -293,7 +302,7 @@ html += `
 </tr>
 `;
 
-episodesSorted.forEach(ep => {
+Object.values(episodeBestMap).forEach(ep => {
 
 const epSwissTotal = (ep.swissWins || 0) + (ep.swissLosses || 0);
 const epSwissWR = epSwissTotal ? ((ep.swissWins / epSwissTotal) * 100).toFixed(1) : "0.0";
@@ -429,10 +438,8 @@ html += `
 html += `</table></div></div>`;
 
 /* =========================
-   GRAPH
+   GRAPH (FIXED ORDER + SAFE INIT)
 ========================= */
-
-const ctx = document.getElementById("chart");
 
 html += `
 <div class="card">
@@ -444,6 +451,8 @@ html += `
 `;
 
 document.getElementById("content").innerHTML = html;
+
+const ctx = document.getElementById("chart").getContext("2d");
 
 new Chart(ctx, {
   type: "line",
