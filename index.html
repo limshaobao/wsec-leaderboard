@@ -107,7 +107,7 @@ function changeShop() {
   renderLeaderboard();
 }
 
-function renderLeaderboard() {
+  function renderLeaderboard() {
 
   let list = [];
 
@@ -123,6 +123,7 @@ function renderLeaderboard() {
         <th>Rank</th>
         <th>Player</th>
         <th>Points</th>
+        <th>Episodes</th>
       </tr>
   `;
 
@@ -134,21 +135,31 @@ function renderLeaderboard() {
 
     const points = p.totalPoints.toFixed(1);
 
+    const episodes = p.episodesPlayed ?? "-";
+
     let style = "";
 
-    // 🥇 GLOBAL #1
+    // 🥇 GLOBAL CHAMPION
     if (currentShop === "GLOBAL" && rank === 1) {
       style = "background:#ffd700; font-weight:bold;";
     }
 
-    // 🟩 SHOP WINNERS
-    if (currentShop !== "GLOBAL" && rank === 1) {
+    // 🟩 SHOP WINNERS (NOT GLOBAL #1)
+    else if (
+      currentShop !== "GLOBAL" &&
+      rank === 1 &&
+      p.globalRank !== 1
+    ) {
       style = "background:#b6fcb6; font-weight:bold;";
     }
 
-    // 🟨 TOP 16 GLOBAL
-    if (currentShop === "GLOBAL" && rank >= 2 && rank <= 17) {
-      style = "background:#fff3a6;";
+    // 🟦 TOP 16 (excluding global #1 AND shop winners)
+    else if (
+      currentShop === "GLOBAL" &&
+      rank >= 2 &&
+      rank <= 17
+    ) {
+      style = "background:#cfe8ff;";
     }
 
     html += `
@@ -160,6 +171,7 @@ function renderLeaderboard() {
           </a>
         </td>
         <td>${points}</td>
+        <td>${episodes}</td>
       </tr>
     `;
   });
