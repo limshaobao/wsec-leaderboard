@@ -103,16 +103,13 @@ fetch("https://script.google.com/macros/s/AKfycbzuWLCBe3q12dR8zlRYmUx0QWCutjMZva
   .then(r => r.text())
   .then(t => JSON.parse(t))
   .then(data => {
-
     allPlayers = data.players;
     shopData = data.shops;
-
     buildShopDropdown();
     renderLeaderboard();
   });
 
 function buildShopDropdown() {
-
   const shops = Object.keys(shopData);
 
   let html = `<select id="shopSelect" onchange="changeShop()">`;
@@ -123,7 +120,6 @@ function buildShopDropdown() {
   });
 
   html += `</select>`;
-
   document.getElementById("shopFilter").innerHTML = html;
 }
 
@@ -132,24 +128,17 @@ function changeShop() {
   renderLeaderboard();
 }
 
-/**
- * 🚀 ROCKET RULE ENGINE (FRONTEND MIRROR OF BACKEND LOGIC)
- */
 function hasRocket(p, isSilver) {
-
   if (isSilver) return true;
   if (p.enableRocket === true) return true;
   if (p.isRocket === true) return true;
-
   return false;
 }
 
 function rocketTooltip(isRocket, blueContext = false, shopName = "", rank = null) {
-
   if (blueContext) {
     return `In running for qualifying to the Top 24 Special Event as Rank ${rank} in ${shopName}`;
   }
-
   return isRocket ? "Qualified" : "In line to qualify";
 }
 
@@ -191,9 +180,7 @@ function renderLeaderboard() {
     const blueSet = new Set();
 
     Object.values(shopData).forEach(shop => {
-
       const ui = shop.ui || {};
-
       if (ui.greenPlayer) shopWinners.add(ui.greenPlayer);
       (ui.bluePlayers || []).forEach(b => blueSet.add(b));
     });
@@ -206,10 +193,9 @@ function renderLeaderboard() {
 
       const isSilver = silverSet.has(p.player);
 
-      // ✅ GOLD NOW 100% GS-DRIVEN (NO DERIVATION)
-      const isOriginalGold = p.isOriginalGlobalChampion === true;
-      const isPassedDownGold = p.isPassedDownGold === true;
-      const isGold = isOriginalGold || isPassedDownGold;
+      const isGold =
+        p.isOriginalGlobalChampion === true ||
+        p.isPassedDownGold === true;
 
       const isGreen = shopWinners.has(p.player);
       const isBlue = blueSet.has(p.player);
@@ -223,18 +209,10 @@ function renderLeaderboard() {
       else if (isGreen) style = "background:#b6fcb6;font-weight:bold;";
       else if (isBlue) style = "background:#cfe8ff;";
 
-      const tooltip = rocketTooltip(rocket);
-
       html += `
-        <tr style="${style}" title="${tooltip}">
+        <tr style="${style}" title="${rocketTooltip(rocket)}">
           <td>${rank}${rocket ? " 🚀" : ""}</td>
-
-          <td>
-            <a href="./player_v2.html?player=${encodeURIComponent(p.player)}">
-              ${p.player}
-            </a>
-          </td>
-
+          <td><a href="./player_v2.html?player=${encodeURIComponent(p.player)}">${p.player}</a></td>
           <td>${points}</td>
           <td>${episodes}</td>
         </tr>
@@ -253,8 +231,6 @@ function renderLeaderboard() {
     const greenPlayer = ui.greenPlayer;
     const bluePlayers = new Set(ui.bluePlayers || []);
 
-    // ❌ REMOVED: globalWinner derivation (NOW INVALID UNDER GS RULES)
-
     const silverSet = new Set(
       allPlayers.filter(p => p.isExternalQualifier).map(p => p.player)
     );
@@ -267,10 +243,9 @@ function renderLeaderboard() {
 
       const isSilver = silverSet.has(p.player);
 
-      // ✅ GOLD NOW GS-ONLY (FIX)
-      const isOriginalGold = p.isOriginalGlobalChampion === true;
-      const isPassedDownGold = p.isPassedDownGold === true;
-      const isGold = isOriginalGold || isPassedDownGold;
+      const isGold =
+        p.isOriginalGlobalChampion === true ||
+        p.isPassedDownGold === true;
 
       const isGreen = p.player === greenPlayer;
       const isBlue = bluePlayers.has(p.player);
@@ -291,13 +266,7 @@ function renderLeaderboard() {
       html += `
         <tr style="${style}" title="${tooltip}">
           <td>${rank}${rocket ? " 🚀" : ""}</td>
-
-          <td>
-            <a href="./player_v2.html?player=${encodeURIComponent(p.player)}">
-              ${p.player}
-            </a>
-          </td>
-
+          <td><a href="./player_v2.html?player=${encodeURIComponent(p.player)}">${p.player}</a></td>
           <td>${points}</td>
           <td>${episodes}</td>
         </tr>
