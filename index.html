@@ -177,7 +177,7 @@ function renderLeaderboard() {
     const silverSet = new Set();
 
     allPlayers.forEach(p => {
-      if (p.isSilverQualifier) {
+      if (p.isExternalQualifier) {
         silverSet.add(p.player);
       }
     });
@@ -185,9 +185,7 @@ function renderLeaderboard() {
     const shopWinners = new Set();
 
     Object.values(shopData).forEach(shop => {
-    
       const ui = shop.ui || {};
-    
       if (ui.greenPlayer) {
         shopWinners.add(ui.greenPlayer);
       }
@@ -196,9 +194,7 @@ function renderLeaderboard() {
     const blueSet = new Set();
 
     Object.values(shopData).forEach(shop => {
-
       const ui = shop.ui || {};
-
       (ui.bluePlayers || []).forEach(player => {
         blueSet.add(player);
       });
@@ -266,7 +262,7 @@ function renderLeaderboard() {
     const silverSet = new Set();
 
     allPlayers.forEach(p => {
-      if (p.isSilverQualifier) {
+      if (p.isExternalQualifier) {
         silverSet.add(p.player);
       }
     });
