@@ -21,13 +21,6 @@
       box-shadow: 0 6px 18px rgba(0,0,0,0.08);
     }
 
-    .leaderboard-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: 10px;
-    }
-
     table {
       width: 100%;
       border-collapse: collapse;
@@ -79,24 +72,6 @@
       background: #004799;
       text-decoration: none;
     }
-
-    /* =========================
-       REFRESH BUTTON
-    ========================= */
-    .refresh-btn {
-      padding: 6px 10px;
-      font-size: 12px;
-      border: none;
-      border-radius: 6px;
-      background: #111;
-      color: white;
-      cursor: pointer;
-    }
-
-    .refresh-btn:hover {
-      background: #333;
-    }
-
   </style>
 </head>
 
@@ -114,17 +89,6 @@
     </a>
   </div>
 
-  <!-- =========================
-       HEADER ROW WITH REFRESH
-  ========================= -->
-  <div class="leaderboard-header">
-    <div></div>
-
-    <button class="refresh-btn" onclick="refreshData()">
-      🔄 Refresh
-    </button>
-  </div>
-
   <div id="leaderboard">Loading...</div>
 
 </div>
@@ -135,22 +99,7 @@ let allPlayers = [];
 let shopData = {};
 let currentShop = "GLOBAL";
 
-const API_URL =
-"https://script.google.com/macros/s/AKfycbzuWLCBe3q12dR8zlRYmUx0QWCutjMZvaUlnkb887jTMd_8pEdE1BN30fp5RUXPCFuA1Q/exec";
-
-/* =========================
-   LOAD DATA
-========================= */
-
-function loadData(force = false) {
-
-  const url = new URL(API_URL);
-
-  if (force) {
-    url.searchParams.append("refresh", "1");
-  }
-
-  fetch(url)
+fetch("https://script.google.com/macros/s/AKfycbzuWLCBe3q12dR8zlRYmUx0QWCutjMZvaUlnkb887jTMd_8pEdE1BN30fp5RUXPCFuA1Q/exec")
   .then(r => r.text())
   .then(t => JSON.parse(t))
   .then(data => {
@@ -159,21 +108,6 @@ function loadData(force = false) {
     buildShopDropdown();
     renderLeaderboard();
   });
-}
-
-loadData(false);
-
-/* =========================
-   REFRESH BUTTON
-========================= */
-
-function refreshData() {
-  loadData(true);
-}
-
-/* =========================
-   EXISTING CODE (UNCHANGED)
-========================= */
 
 function buildShopDropdown() {
   const shops = Object.keys(shopData);
@@ -233,6 +167,9 @@ function renderLeaderboard() {
       </tr>
   `;
 
+  // =========================
+  // GLOBAL VIEW
+  // =========================
   if (currentShop === "GLOBAL") {
 
     const silverSet = new Set(
@@ -283,6 +220,9 @@ function renderLeaderboard() {
     });
   }
 
+  // =========================
+  // SHOP VIEW
+  // =========================
   else {
 
     const shop = shopData[currentShop];
