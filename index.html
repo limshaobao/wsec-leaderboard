@@ -84,16 +84,9 @@
   <div id="shopFilter"></div>
 
   <div style="margin:15px 0;">
-
-    <a
-      id="shopPageLink"
-      class="shop-button"
-      href="#"
-      target="_blank"
-    >
+    <a id="shopPageLink" class="shop-button" href="#" target="_blank">
       Open Full Shop Page
     </a>
-
   </div>
 
   <div id="leaderboard">Loading...</div>
@@ -107,8 +100,8 @@ let shopData = {};
 let currentShop = "GLOBAL";
 
 fetch("https://script.google.com/macros/s/AKfycbzuWLCBe3q12dR8zlRYmUx0QWCutjMZvaUlnkb887jTMd_8pEdE1BN30fp5RUXPCFuA1Q/exec")
-  .then(response => response.text())
-  .then(text => JSON.parse(text))
+  .then(r => r.text())
+  .then(t => JSON.parse(t))
   .then(data => {
 
     allPlayers = data.players;
@@ -122,13 +115,8 @@ function buildShopDropdown() {
 
   const shops = Object.keys(shopData);
 
-  let html = `
-    <select id="shopSelect" onchange="changeShop()">
-  `;
-
-  html += `
-    <option value="GLOBAL">Global Leaderboard</option>
-  `;
+  let html = `<select id="shopSelect" onchange="changeShop()">`;
+  html += `<option value="GLOBAL">Global Leaderboard</option>`;
 
   shops.forEach(s => {
     html += `<option value="${s}">${s}</option>`;
@@ -142,6 +130,31 @@ function buildShopDropdown() {
 function changeShop() {
   currentShop = document.getElementById("shopSelect").value;
   renderLeaderboard();
+}
+
+/**
+ * 🚀 ROCKET RULE ENGINE (FRONTEND MIRROR OF BACKEND LOGIC)
+ */
+function hasRocket(p, isSilver) {
+
+  // SILVER ALWAYS HAS ROCKET
+  if (isSilver) return true;
+
+  // backend-controlled flag (preferred)
+  if (p.enableRocket === true) return true;
+
+  if (p.isRocket === true) return true;
+
+  return false;
+}
+
+function rocketTooltip(isRocket, blueContext = false, shopName = "", rank = null) {
+
+  if (blueContext) {
+    return `In running for qualifying to the Top 24 Special Event as Rank ${rank} in ${shopName}`;
+  }
+
+  return isRocket ? "Qualified" : "In line to qualify";
 }
 
 function renderLeaderboard() {
@@ -169,35 +182,24 @@ function renderLeaderboard() {
       </tr>
   `;
 
-  // =====================================================
+  // =========================
   // GLOBAL VIEW
-  // =====================================================
+  // =========================
   if (currentShop === "GLOBAL") {
 
-    const silverSet = new Set();
-
-    allPlayers.forEach(p => {
-      if (p.isExternalQualifier) {
-        silverSet.add(p.player);
-      }
-    });
+    const silverSet = new Set(
+      allPlayers.filter(p => p.isExternalQualifier).map(p => p.player)
+    );
 
     const shopWinners = new Set();
-
-    Object.values(shopData).forEach(shop => {
-      const ui = shop.ui || {};
-      if (ui.greenPlayer) {
-        shopWinners.add(ui.greenPlayer);
-      }
-    });
-
     const blueSet = new Set();
 
     Object.values(shopData).forEach(shop => {
+
       const ui = shop.ui || {};
-      (ui.bluePlayers || []).forEach(player => {
-        blueSet.add(player);
-      });
+
+      if (ui.greenPlayer) shopWinners.add(ui.greenPlayer);
+      (ui.bluePlayers || []).forEach(b => blueSet.add(b));
     });
 
     list.forEach(p => {
@@ -206,31 +208,25 @@ function renderLeaderboard() {
       const points = Number(p.totalPoints).toFixed(1);
       const episodes = p.episodesPlayed ?? "-";
 
+      const isSilver = silverSet.has(p.player);
+      const isGold = rank === 1;
+      const isGreen = shopWinners.has(p.player);
+      const isBlue = blueSet.has(p.player);
+
+      const rocket = hasRocket(p, isSilver);
+
       let style = "";
 
-      // 🩶 SILVER QUALIFIER
-      if (silverSet.has(p.player)) {
-        style = "background:#d9d9d9;font-weight:bold;";
-      }
+      if (isSilver) style = "background:#d9d9d9;font-weight:bold;";
+      else if (isGold) style = "background:#ffd700;font-weight:bold;";
+      else if (isGreen) style = "background:#b6fcb6;font-weight:bold;";
+      else if (isBlue) style = "background:#cfe8ff;";
 
-      // 🥇 GLOBAL WINNER
-      else if (rank === 1) {
-        style = "background:#ffd700;font-weight:bold;";
-      }
-
-      // 🟩 SHOP WINNERS
-      else if (shopWinners.has(p.player)) {
-        style = "background:#b6fcb6;font-weight:bold;";
-      }
-
-      // 🟦 QUALIFIERS
-      else if (blueSet.has(p.player)) {
-        style = "background:#cfe8ff;";
-      }
+      const tooltip = rocketTooltip(rocket);
 
       html += `
-        <tr style="${style}">
-          <td>${rank}</td>
+        <tr style="${style}" title="${tooltip}">
+          <td>${rank}${rocket ? " 🚀" : ""}</td>
 
           <td>
             <a href="./player_v2.html?player=${encodeURIComponent(p.player)}">
@@ -245,9 +241,9 @@ function renderLeaderboard() {
     });
   }
 
-  // =====================================================
+  // =========================
   // SHOP VIEW
-  // =====================================================
+  // =========================
   else {
 
     const shop = shopData[currentShop];
@@ -259,13 +255,9 @@ function renderLeaderboard() {
     const globalWinner =
       allPlayers.find(p => p.globalRank === 1)?.player;
 
-    const silverSet = new Set();
-
-    allPlayers.forEach(p => {
-      if (p.isExternalQualifier) {
-        silverSet.add(p.player);
-      }
-    });
+    const silverSet = new Set(
+      allPlayers.filter(p => p.isExternalQualifier).map(p => p.player)
+    );
 
     list.forEach(p => {
 
@@ -273,31 +265,26 @@ function renderLeaderboard() {
       const points = Number(p.totalPoints).toFixed(1);
       const episodes = p.episodesPlayed ?? "-";
 
+      const isSilver = silverSet.has(p.player);
+      const isGold = p.player === globalWinner;
+      const isGreen = p.player === greenPlayer;
+      const isBlue = bluePlayers.has(p.player);
+
+      const rocket = hasRocket(p, isSilver);
+      const tooltip = isBlue
+        ? rocketTooltip(false, true, currentShop, rank)
+        : rocketTooltip(rocket);
+
       let style = "";
 
-      // 🩶 SILVER QUALIFIER
-      if (silverSet.has(p.player)) {
-        style = "background:#d9d9d9;font-weight:bold;";
-      }
-
-      // 🥇 GLOBAL #1 ALWAYS GOLD
-      else if (p.player === globalWinner) {
-        style = "background:#ffd700;font-weight:bold;";
-      }
-
-      // 🟩 GREEN SLOT
-      else if (p.player === greenPlayer) {
-        style = "background:#b6fcb6;font-weight:bold;";
-      }
-
-      // 🟦 BLUE SLOTS
-      else if (bluePlayers.has(p.player)) {
-        style = "background:#cfe8ff;";
-      }
+      if (isSilver) style = "background:#d9d9d9;font-weight:bold;";
+      else if (isGold) style = "background:#ffd700;font-weight:bold;";
+      else if (isGreen) style = "background:#b6fcb6;font-weight:bold;";
+      else if (isBlue) style = "background:#cfe8ff;";
 
       html += `
-        <tr style="${style}">
-          <td>${rank}</td>
+        <tr style="${style}" title="${tooltip}">
+          <td>${rank}${rocket ? " 🚀" : ""}</td>
 
           <td>
             <a href="./player_v2.html?player=${encodeURIComponent(p.player)}">
@@ -313,7 +300,6 @@ function renderLeaderboard() {
   }
 
   html += `</table>`;
-
   document.getElementById("leaderboard").innerHTML = html;
 }
 
