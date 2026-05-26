@@ -137,12 +137,8 @@ function changeShop() {
  */
 function hasRocket(p, isSilver) {
 
-  // SILVER ALWAYS HAS ROCKET
   if (isSilver) return true;
-
-  // backend-controlled flag (preferred)
   if (p.enableRocket === true) return true;
-
   if (p.isRocket === true) return true;
 
   return false;
@@ -202,6 +198,12 @@ function renderLeaderboard() {
       (ui.bluePlayers || []).forEach(b => blueSet.add(b));
     });
 
+    const originalGold =
+      allPlayers.find(p => p.isOriginalGlobalChampion)?.player;
+
+    const passedDownGold =
+      allPlayers.find(p => p.isGlobalChampion)?.player;
+
     list.forEach(p => {
 
       const rank = p.globalRank;
@@ -209,7 +211,12 @@ function renderLeaderboard() {
       const episodes = p.episodesPlayed ?? "-";
 
       const isSilver = silverSet.has(p.player);
-      const isGold = rank === 1;
+
+      // ✅ GOLD FIX: explicit separation
+      const isOriginalGold = p.player === originalGold;
+      const isPassedDownGold = p.player === passedDownGold;
+      const isGold = isOriginalGold || isPassedDownGold;
+
       const isGreen = shopWinners.has(p.player);
       const isBlue = blueSet.has(p.player);
 
@@ -266,11 +273,15 @@ function renderLeaderboard() {
       const episodes = p.episodesPlayed ?? "-";
 
       const isSilver = silverSet.has(p.player);
+
+      // SHOP GOLD remains original rank #1 identity (as per backend stability)
       const isGold = p.player === globalWinner;
+
       const isGreen = p.player === greenPlayer;
       const isBlue = bluePlayers.has(p.player);
 
       const rocket = hasRocket(p, isSilver);
+
       const tooltip = isBlue
         ? rocketTooltip(false, true, currentShop, rank)
         : rocketTooltip(rocket);
