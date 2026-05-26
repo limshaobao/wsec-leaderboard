@@ -198,12 +198,6 @@ function renderLeaderboard() {
       (ui.bluePlayers || []).forEach(b => blueSet.add(b));
     });
 
-    const originalGold =
-      allPlayers.find(p => p.isOriginalGlobalChampion)?.player;
-
-    const passedDownGold =
-      allPlayers.find(p => p.isGlobalChampion)?.player;
-
     list.forEach(p => {
 
       const rank = p.globalRank;
@@ -212,9 +206,9 @@ function renderLeaderboard() {
 
       const isSilver = silverSet.has(p.player);
 
-      // ✅ GOLD FIX: explicit separation
-      const isOriginalGold = p.player === originalGold;
-      const isPassedDownGold = p.player === passedDownGold;
+      // ✅ GOLD SYSTEM FIX (TRUST GS ONLY — NO FRONTEND DERIVATION)
+      const isOriginalGold = p.isOriginalGlobalChampion === true;
+      const isPassedDownGold = p.isPassedDownGold === true;
       const isGold = isOriginalGold || isPassedDownGold;
 
       const isGreen = shopWinners.has(p.player);
@@ -274,7 +268,6 @@ function renderLeaderboard() {
 
       const isSilver = silverSet.has(p.player);
 
-      // SHOP GOLD remains original rank #1 identity (as per backend stability)
       const isGold = p.player === globalWinner;
 
       const isGreen = p.player === greenPlayer;
