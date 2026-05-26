@@ -206,7 +206,7 @@ function renderLeaderboard() {
 
       const isSilver = silverSet.has(p.player);
 
-      // ✅ GOLD SYSTEM FIX (TRUST GS ONLY — NO FRONTEND DERIVATION)
+      // ✅ GOLD NOW 100% GS-DRIVEN (NO DERIVATION)
       const isOriginalGold = p.isOriginalGlobalChampion === true;
       const isPassedDownGold = p.isPassedDownGold === true;
       const isGold = isOriginalGold || isPassedDownGold;
@@ -253,8 +253,7 @@ function renderLeaderboard() {
     const greenPlayer = ui.greenPlayer;
     const bluePlayers = new Set(ui.bluePlayers || []);
 
-    const globalWinner =
-      allPlayers.find(p => p.globalRank === 1)?.player;
+    // ❌ REMOVED: globalWinner derivation (NOW INVALID UNDER GS RULES)
 
     const silverSet = new Set(
       allPlayers.filter(p => p.isExternalQualifier).map(p => p.player)
@@ -268,7 +267,10 @@ function renderLeaderboard() {
 
       const isSilver = silverSet.has(p.player);
 
-      const isGold = p.player === globalWinner;
+      // ✅ GOLD NOW GS-ONLY (FIX)
+      const isOriginalGold = p.isOriginalGlobalChampion === true;
+      const isPassedDownGold = p.isPassedDownGold === true;
+      const isGold = isOriginalGold || isPassedDownGold;
 
       const isGreen = p.player === greenPlayer;
       const isBlue = bluePlayers.has(p.player);
