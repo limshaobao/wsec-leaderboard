@@ -193,9 +193,8 @@ function renderLeaderboard() {
 
       const isSilver = silverSet.has(p.player);
 
-      const isGold =
-        p.isOriginalGlobalChampion === true ||
-        p.isPassedDownGold === true;
+      // ✅ GOLD NOW COMES ONLY FROM BACKEND VISUAL OVERRIDE
+      const isGold = p.isGoldVisualOverride === true;
 
       const isGreen = shopWinners.has(p.player);
       const isBlue = blueSet.has(p.player);
@@ -243,9 +242,8 @@ function renderLeaderboard() {
 
       const isSilver = silverSet.has(p.player);
 
-      const isGold =
-        p.isOriginalGlobalChampion === true ||
-        p.isPassedDownGold === true;
+      // ✅ GOLD VISUAL OVERRIDE FROM BACKEND ONLY
+      const isGold = p.isGoldVisualOverride === true;
 
       const isGreen = p.player === greenPlayer;
       const isBlue = bluePlayers.has(p.player);
