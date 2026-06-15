@@ -738,7 +738,12 @@ fetch(API_URL)
     function drawProgressChart(showAll = false) {
 
       const playersToShow = showAll
-        ? Object.keys(progressionMap)
+        
+        ? Object.keys(progressionMap).filter(player =>
+        progressionMap[player].some(
+        ep => ep.episodeScore > 0
+        )
+        )
         : top5Players;
 
 
