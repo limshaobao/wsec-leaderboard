@@ -337,12 +337,12 @@ fetch(API_URL)
 
 
     // ---------------------------------
-    // NEW: TOP 10 DEFAULT CHART FILTER
+    // NEW: TOP 5 DEFAULT CHART FILTER
     // ---------------------------------
 
-    const top10Players =
+    const top5Players =
       shop.leaderboard
-        .slice(0, 10)
+        .slice(0, 5)
         .map(p => p.player);
 
     
@@ -676,7 +676,7 @@ fetch(API_URL)
           </label>
 
           <span style="margin-left: 10px; color: #666;">
-            (Default: Top 10)
+            (Default: Top 5)
           </span>
 
         </div>
@@ -693,7 +693,7 @@ fetch(API_URL)
     document.getElementById("content").innerHTML = html;
 
 
-        // ---------------------------------
+    // ---------------------------------
     // NEW: DRAW PLAYER PROGRESSION CHART
     // ---------------------------------
 
@@ -739,7 +739,7 @@ fetch(API_URL)
 
       const playersToShow = showAll
         ? Object.keys(progressionMap)
-        : top10Players;
+        : top5Players;
 
 
       const datasets = playersToShow
@@ -810,7 +810,7 @@ fetch(API_URL)
                     return [
                       `${player}`,
                       `Episode score: ${info.episodeScore.toFixed(1)}`,
-                      `Best 5 total: ${info.total.toFixed(1)}`,
+                      `Total shop score: ${info.total.toFixed(1)}`,
                       `Change: +${info.improvement.toFixed(1)}`
                     ];
 
@@ -833,7 +833,7 @@ fetch(API_URL)
 
                   display: true,
 
-                  text: "Best 5 Points Total"
+                  text: "Shop Score"
 
                 }
 
