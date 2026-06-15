@@ -72,6 +72,79 @@
       background: #004799;
       text-decoration: none;
     }
+
+    /* ===================================
+       NEW: League information accordion
+       =================================== */
+
+    .league-toggle {
+      margin-top: 15px;
+      cursor: pointer;
+      user-select: none;
+      font-weight: bold;
+      color: #333;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .league-toggle:hover {
+      color: #005bbb;
+    }
+
+    .league-arrow {
+      display: inline-block;
+      transition: transform 0.2s ease;
+    }
+
+    .league-toggle.open .league-arrow {
+      transform: rotate(90deg);
+    }
+
+    .league-info {
+      display: none;
+      margin-top: 12px;
+      padding: 15px 18px;
+      background: #f6f6f6;
+      border-radius: 8px;
+      border-left: 4px solid #005bbb;
+      line-height: 1.6;
+      color: #333;
+    }
+
+    .league-info.show {
+      display: block;
+    }
+
+    .league-info ul {
+      margin: 10px 0;
+      padding-left: 22px;
+    }
+
+    .info-gold {
+      color: #c99700;
+      font-weight: bold;
+      text-decoration: underline;
+    }
+
+    .info-green {
+      color: #218838;
+      font-weight: bold;
+      text-decoration: underline;
+    }
+
+    .info-blue {
+      color: #005bbb;
+      font-weight: bold;
+      text-decoration: underline;
+    }
+
+    .info-silver {
+      color: #d9d9d9;
+      font-weight: bold;
+      text-decoration: underline;
+    }
+
   </style>
 </head>
 
@@ -89,11 +162,106 @@
     </a>
   </div>
 
+    <!-- ===================================
+       NEW: League information accordion
+       Hidden by default
+       =================================== -->
+
+  <div 
+    class="league-toggle" 
+    onclick="toggleLeagueInfo()">
+
+    <span class="league-arrow">
+      ▶
+    </span>
+
+    <span>
+      How does the 2026 WSEC UK League work?
+    </span>
+
+  </div>
+
+
+  <div id="leagueInfo" class="league-info">
+
+    This page is maintained by the WSEC UK Team, and tracks the real-time live standings for the 2026 edition of the
+    <strong>Weiss Schwarz European Championship UK League</strong>. 
+
+    <br><br>
+    
+    Standings update automatically as episode results are submitted
+    throughout the season.
+
+    <br><br>
+
+    A player's total points on the global and shop tables are calculated from their
+    <strong>top 5 episode results</strong>.
+    As players continue to participate in new WSEC episodes, they can replace their weaker results with stronger results in their top 5, and push higher up the table.
+
+    <br><br>
+
+    Current leaderboard highlights:
+
+    <ul>
+
+      <li>
+        <span class="info-gold">Gold</span> -
+        Player currently in the running for the
+        <strong>UK League Champion</strong> position.
+        <strong>This player qualifies directly for the
+        WSEC Finals</strong>.
+      </li>
+
+      <li>
+        <span class="info-green">Green</span> -
+        Players currently in the running for their respective
+        <strong>Shop League Champion</strong> positions.
+        <strong>These players qualify directly for the
+        WSEC Finals</strong>. 
+        This invite can be passed down if the same player tops 2 or more Shop Leagues.
+      </li>
+
+      <li>
+        <span class="info-blue">Blue</span> -
+        Players currently 2nd or 3rd in their respective Shop Leagues. 
+        These players qualify for the post-season
+        <strong>Top 24 Qualifier Playoffs</strong>, which can yield invites to the WSEC Finals.
+      </li>
+
+      <li>
+        <span class="info-silver">Silver</span> -
+        Players who have qualified for the
+        <strong>WSEC Finals</strong>
+        through other events.
+      </li>
+
+    </ul>
+
+    Players who are confirmed to have qualified will be furnished with an icon next to their name.
+
+  </div>
+
+
   <div id="leaderboard">Loading...</div>
 
 </div>
 
 <script>
+
+function toggleLeagueInfo() {
+
+  const panel =
+    document.getElementById("leagueInfo");
+
+  const toggle =
+    document.querySelector(".league-toggle");
+
+  panel.classList.toggle("show");
+
+  toggle.classList.toggle("open");
+
+}
+
 
 let allPlayers = [];
 let shopData = {};
