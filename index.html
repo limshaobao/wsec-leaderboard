@@ -254,13 +254,20 @@ function toggleBulletin() {
    FIXED: moved from HTML body
    ========================= */
 function renderBulletin() {
-  if (!window.bulletins || !Array.isArray(bulletins)) return;
 
-  const latest = bulletins.slice(0, 3);
+  const container = document.getElementById("bulletinInfo");
+
+  if (!window.bulletins || !Array.isArray(window.bulletins)) {
+    container.innerHTML = "<em>No bulletins available.</em>";
+    return;
+  }
+
+  const latest = window.bulletins.slice(0, 3);
 
   let html = "<ul>";
 
   latest.forEach(item => {
+
     html += `
       <li>
         <strong>${item.date}</strong> — ${item.title}
@@ -279,7 +286,7 @@ function renderBulletin() {
     <a href="./bulletin.html">View full WSEC archive →</a>
   `;
 
-  document.getElementById("bulletinInfo").innerHTML = html;
+  container.innerHTML = html;
 }
 
 let allPlayers = [];
