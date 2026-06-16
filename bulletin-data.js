@@ -1,4 +1,4 @@
-const bulletins = [
+window.bulletins = [
 
   {
     date: "15 August 2026",
