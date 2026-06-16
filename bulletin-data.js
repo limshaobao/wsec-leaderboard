@@ -1,7 +1,7 @@
 window.bulletins = [
 
   {
-    date: "15 August 2026",
+    date: "16 June 2026",
     title: "Episode 5 Update",
     content: [
       "Episode 5 is underway in the UK! We highlight this month the extremely tight race for top spot in Card Goblin and Dark Sphere, which will no doubt only be settled in the upcoming final Episode 6. Good luck to all players as always!",
@@ -13,10 +13,10 @@ window.bulletins = [
   },
 
   {
-    date: "16 June 2026",
-    title: "WSEC UK League Website Launched",
+    date: "15 June 2026",
+    title: "Hello World! (Bulletin ver)",
     content: [
-      "Global standings, shop pages, player profiles, and league statistics are now live."
+      "Bulletin board now live!"
     ]
   }
 
