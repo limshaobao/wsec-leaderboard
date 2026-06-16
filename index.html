@@ -73,10 +73,6 @@
       text-decoration: none;
     }
 
-    /* ===================================
-       NEW: League information accordion
-       =================================== */
-
     .league-toggle {
       margin-top: 15px;
       cursor: pointer;
@@ -121,78 +117,54 @@
       padding-left: 22px;
     }
 
-    .info-gold {
+    .info-gold { color: #c99700; font-weight: bold; text-decoration: underline; }
+    .info-green { color: #218838; font-weight: bold; text-decoration: underline; }
+    .info-blue { color: #005bbb; font-weight: bold; text-decoration: underline; }
+    .info-silver { color: #d9d9d9; font-weight: bold; text-decoration: underline; }
+
+    .bulletin-toggle {
+      margin-top: 12px;
+      cursor: pointer;
+      user-select: none;
+      font-weight: bold;
+      color: #333;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .bulletin-toggle:hover {
       color: #c99700;
-      font-weight: bold;
-      text-decoration: underline;
     }
 
-    .info-green {
-      color: #218838;
-      font-weight: bold;
-      text-decoration: underline;
+    .bulletin-arrow {
+      display: inline-block;
+      transition: transform 0.2s ease;
     }
 
-    .info-blue {
-      color: #005bbb;
-      font-weight: bold;
-      text-decoration: underline;
+    .bulletin-toggle.open .bulletin-arrow {
+      transform: rotate(90deg);
     }
 
-    .info-silver {
-      color: #d9d9d9;
-      font-weight: bold;
-      text-decoration: underline;
+    .bulletin-info {
+      display: none;
+      margin-top: 12px;
+      padding: 15px 18px;
+      background: #fffaf0;
+      border-radius: 8px;
+      border-left: 4px solid #c99700;
+      line-height: 1.6;
+      color: #333;
     }
 
-  /* ===================================
-   NEW: WSEC League Bulletin accordion
-   =================================== */
+    .bulletin-info.show {
+      display: block;
+    }
 
-.bulletin-toggle {
-  margin-top: 12px;
-  cursor: pointer;
-  user-select: none;
-  font-weight: bold;
-  color: #333;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.bulletin-toggle:hover {
-  color: #c99700;
-}
-
-.bulletin-arrow {
-  display: inline-block;
-  transition: transform 0.2s ease;
-}
-
-.bulletin-toggle.open .bulletin-arrow {
-  transform: rotate(90deg);
-}
-
-.bulletin-info {
-  display: none;
-  margin-top: 12px;
-  padding: 15px 18px;
-  background: #fffaf0;
-  border-radius: 8px;
-  border-left: 4px solid #c99700;
-  line-height: 1.6;
-  color: #333;
-}
-
-.bulletin-info.show {
-  display: block;
-}
-
-.bulletin-info ul {
-  margin: 10px 0;
-  padding-left: 22px;
-}
-
+    .bulletin-info ul {
+      margin: 10px 0;
+      padding-left: 22px;
+    }
   </style>
 </head>
 
@@ -210,174 +182,105 @@
     </a>
   </div>
 
-    <!-- ===================================
-       NEW: League information accordion
-       Hidden by default
-       =================================== -->
-
-  <div 
-    class="league-toggle" 
-    onclick="toggleLeagueInfo()">
-
-    <span class="league-arrow">
-      ▶
-    </span>
-
-    <span>
-      How does the Weiss Schwarz European Championship (WSEC) work?
-    </span>
-
+  <div class="league-toggle" onclick="toggleLeagueInfo()">
+    <span class="league-arrow">▶</span>
+    <span>How does the Weiss Schwarz European Championship (WSEC) work?</span>
   </div>
-
 
   <div id="leagueInfo" class="league-info">
 
     This page is maintained by the Weiss Schwarz UK Community's WSEC Representatives, and tracks the real-time live standings for the 2026 edition of the
-    <strong>WSEC UK League</strong>. 
+    <strong>WSEC UK League</strong>.
 
     <br><br>
-    
-    Standings update automatically as episode results are submitted
-    throughout the season.
+
+    Standings update automatically as episode results are submitted throughout the season.
 
     <br><br>
 
     A player's total points on the global and shop leaderboards are calculated from their
     <strong>top 5 episode results</strong>.
-    As players continue to participate in new WSEC episodes, they can replace their weaker results with stronger results in their top 5, and improve their overall points total.
 
     <br><br>
 
     <strong>Leaderboard guide:</strong>
 
     <ul>
-
-      <li>
-        <span class="info-gold">Gold</span> -
-        Player currently in the running for the
-        <strong>UK League Champion</strong> position.
-        <strong>This player receives a direct invite to the
-        WSEC Finals</strong>.
-      </li>
-
-      <li>
-        <span class="info-green">Green</span> -
-        Players currently in the running for their respective
-        <strong>Shop League Champion</strong> positions.
-        <strong>These players receive direct invites to the
-        WSEC Finals</strong>. 
-        This invite can be passed down if the same player tops 2 or more Shop Leagues. Shops must complete 4 or more episodes for their Shop League Champion invite to be valid.
-      </li>
-
-      <li>
-        <span class="info-blue">Blue</span> -
-        Players currently 2nd or 3rd in their respective Shop Leagues. 
-        These players qualify for the post-season
-        <strong>Top 24 Qualifier Playoffs</strong>, which can yield invites to the WSEC Finals. Invites to the Playoffs do not pass down.
-      </li>
-
-      <li>
-        <span class="info-silver">Silver</span> -
-        Players who have received their
-        <strong>WSEC Finals</strong>
-        invites through other events.
-      </li>
-
+      <li><span class="info-gold">Gold</span> - UK League Champion invite.</li>
+      <li><span class="info-green">Green</span> - Shop Champions.</li>
+      <li><span class="info-blue">Blue</span> - Top 24 Qualifiers.</li>
+      <li><span class="info-silver">Silver</span> - External qualifiers.</li>
     </ul>
 
-    Players who are confirmed to have qualified will be furnished with an icon next to their name.
-
-    <br><br>
     <strong>Resources:</strong>
-    <li>
-      <strong><a href="https://weissteatime.com/wsec/" target="_blank">Official WSEC Website</a></strong>
-   </li>
-   <li>
-       <strong><a href="http://www.weissschwarz.uk" target="_blank">Weiss Schwarz UK Community Website</a></strong>
-   </li>
+    <ul>
+      <li><strong><a href="https://weissteatime.com/wsec/" target="_blank">Official WSEC Website</a></strong></li>
+      <li><strong><a href="http://www.weissschwarz.uk" target="_blank">Weiss Schwarz UK Community Website</a></strong></li>
+    </ul>
+
   </div>
 
+  <!-- Bulletin toggle -->
+  <div class="bulletin-toggle" onclick="toggleBulletin()">
+    <span class="bulletin-arrow">▶</span>
+    <span>WSEC League Bulletin - Latest Updates</span>
+  </div>
 
-  <!-- ===================================
-     NEW: WSEC League Bulletin
-     Hidden by default
-     =================================== -->
-
-<div
-  class="bulletin-toggle"
-  onclick="toggleBulletin()">
-
-  <span class="bulletin-arrow">
-    ▶
-  </span>
-
-  <span>
-    WSEC League Bulletin - Updated 16 June 2026
-  </span>
-
-</div>
-
-
-<div id="bulletinInfo" class="bulletin-info">
-
-  <ul>
-
-    <li>
-      <strong>16 June 2026</strong> 
-      <br>
-      Episode 5 is underway in the UK! We highlight this month the extremely tight race for top spot in Card Goblin and Dark Sphere, which will no doubt only be settled in the upcoming final Episode 6. Good luck to all players as always!  
-      <br>
-      Also, this weekend, WSEC is hosting its first ever Bushiroad Card Fight Championship in Milan, Italy. Good luck to all our UK reps!
-      <br>
-      Admin note: Huz Gaming results are now fully updated. 
-    </li>
-
-    <li>
-      <strong>16 June 2026</strong>
-      <br>
-      Hello world! We are adding this short section so players stay informed of any significant news/updates. 
-    </li>
-
-  </ul>
-
-</div>
-
-  
+  <div id="bulletinInfo" class="bulletin-info"></div>
 
   <div id="leaderboard">Loading...</div>
 
 </div>
 
+<script src="bulletin-data.js"></script>
+
 <script>
 
 function toggleLeagueInfo() {
-
-  const panel =
-    document.getElementById("leagueInfo");
-
-  const toggle =
-    document.querySelector(".league-toggle");
-
+  const panel = document.getElementById("leagueInfo");
+  const toggle = document.querySelector(".league-toggle");
   panel.classList.toggle("show");
-
   toggle.classList.toggle("open");
-
 }
 
-  function toggleBulletin() {
-
-  const panel =
-    document.getElementById("bulletinInfo");
-
-  const toggle =
-    document.querySelector(".bulletin-toggle");
-
+function toggleBulletin() {
+  const panel = document.getElementById("bulletinInfo");
+  const toggle = document.querySelector(".bulletin-toggle");
   panel.classList.toggle("show");
-
   toggle.classList.toggle("open");
-
 }
 
+/* =========================
+   FIXED: moved from HTML body
+   ========================= */
+function renderBulletin() {
+  if (!window.bulletins || !Array.isArray(bulletins)) return;
+
+  const latest = bulletins.slice(0, 3);
+
+  let html = "<ul>";
+
+  latest.forEach(item => {
+    html += `
+      <li>
+        <strong>${item.date}</strong> — ${item.title}
+    `;
+
+    item.content.forEach(paragraph => {
+      html += `<p>${paragraph}</p>`;
+    });
+
+    html += `</li>`;
+  });
+
+  html += `
+    </ul>
+    <br>
+    <a href="./bulletin.html">View full WSEC archive →</a>
+  `;
+
+  document.getElementById("bulletinInfo").innerHTML = html;
+}
 
 let allPlayers = [];
 let shopData = {};
@@ -391,6 +294,7 @@ fetch("https://script.google.com/macros/s/AKfycbzuWLCBe3q12dR8zlRYmUx0QWCutjMZva
     shopData = data.shops;
     buildShopDropdown();
     renderLeaderboard();
+    renderBulletin();
   });
 
 function buildShopDropdown() {
@@ -451,9 +355,6 @@ function renderLeaderboard() {
       </tr>
   `;
 
-  // =========================
-  // GLOBAL VIEW
-  // =========================
   if (currentShop === "GLOBAL") {
 
     const silverSet = new Set(
@@ -502,12 +403,7 @@ function renderLeaderboard() {
         </tr>
       `;
     });
-  }
-
-  // =========================
-  // SHOP VIEW
-  // =========================
-  else {
+  } else {
 
     const shop = shopData[currentShop];
     const ui = shop.ui || {};
