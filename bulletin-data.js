@@ -1,5 +1,13 @@
 window.bulletins = [
 
+    {
+    date: "17 June 2026",
+    title: "Episode 5 Update v2",
+    content: [
+      "Admin note: Games Hub results are now fully updated."
+    ]
+  },
+  
   {
     date: "16 June 2026",
     title: "Episode 5 Update",
