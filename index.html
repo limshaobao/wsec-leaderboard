@@ -145,6 +145,54 @@
       text-decoration: underline;
     }
 
+  /* ===================================
+   NEW: WSEC League Bulletin accordion
+   =================================== */
+
+.bulletin-toggle {
+  margin-top: 12px;
+  cursor: pointer;
+  user-select: none;
+  font-weight: bold;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bulletin-toggle:hover {
+  color: #c99700;
+}
+
+.bulletin-arrow {
+  display: inline-block;
+  transition: transform 0.2s ease;
+}
+
+.bulletin-toggle.open .bulletin-arrow {
+  transform: rotate(90deg);
+}
+
+.bulletin-info {
+  display: none;
+  margin-top: 12px;
+  padding: 15px 18px;
+  background: #fffaf0;
+  border-radius: 8px;
+  border-left: 4px solid #c99700;
+  line-height: 1.6;
+  color: #333;
+}
+
+.bulletin-info.show {
+  display: block;
+}
+
+.bulletin-info ul {
+  margin: 10px 0;
+  padding-left: 22px;
+}
+
   </style>
 </head>
 
@@ -250,6 +298,52 @@
   </div>
 
 
+  <!-- ===================================
+     NEW: WSEC League Bulletin
+     Hidden by default
+     =================================== -->
+
+<div
+  class="bulletin-toggle"
+  onclick="toggleBulletin()">
+
+  <span class="bulletin-arrow">
+    ▶
+  </span>
+
+  <span>
+    WSEC League Bulletin - Updated 16 June 2026
+  </span>
+
+</div>
+
+
+<div id="bulletinInfo" class="bulletin-info">
+
+  <ul>
+
+    <li>
+      <strong>16 June 2026</strong> 
+      <br>
+      Episode 5 is underway in the UK! We highlight this month the extremely tight race for top spot in Card Goblin and Dark Sphere, which will no doubt only be settled in the upcoming final Episode 6. Good luck to all players as always!  
+      <br>
+      Also, this weekend, WSEC is hosting its first ever Bushiroad Card Fight Championship in Milan, Italy. Good luck to all our UK reps!
+      <br>
+      Admin note: Huz Gaming results are now fully updated. 
+    </li>
+
+    <li>
+      <strong>16 June 2026</strong>
+      <br>
+      Hello world! We are adding this short section so players stay informed of any significant news/updates. 
+    </li>
+
+  </ul>
+
+</div>
+
+  
+
   <div id="leaderboard">Loading...</div>
 
 </div>
@@ -263,6 +357,20 @@ function toggleLeagueInfo() {
 
   const toggle =
     document.querySelector(".league-toggle");
+
+  panel.classList.toggle("show");
+
+  toggle.classList.toggle("open");
+
+}
+
+  function toggleBulletin() {
+
+  const panel =
+    document.getElementById("bulletinInfo");
+
+  const toggle =
+    document.querySelector(".bulletin-toggle");
 
   panel.classList.toggle("show");
 
