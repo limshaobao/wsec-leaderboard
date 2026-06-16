@@ -90,12 +90,8 @@ function renderAllBulletins() {
 
   let html = "";
 
-  // newest first
-  const sorted = [...bulletins].sort((a, b) => {
-    return new Date(b.date) - new Date(a.date);
-  });
-
-  sorted.forEach(b => {
+  // NO sorting — use file order directly
+  bulletins.forEach(b => {
 
     html += `
       <div class="bulletin">
