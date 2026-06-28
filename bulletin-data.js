@@ -1,5 +1,16 @@
 window.bulletins = [
 
+  {
+    date: "28 June 2026",
+    title: "Episode 5 Update v3",
+    content: [
+      "After a (literally) heated weekend in Milan, our UK reps were unfortunately unable to grab an extra invite. We will also shortly be clarifying on how the remaining invites will be distributed this year for non-automatic qualification/miscellaneous invites. Watch this space!",
+
+      "Admin note: Calamity Comics results are now fully updated."
+    ]
+  },
+
+    
     {
     date: "17 June 2026",
     title: "Episode 5 Update v2",
