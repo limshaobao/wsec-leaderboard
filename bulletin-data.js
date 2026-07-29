@@ -1,5 +1,19 @@
 window.bulletins = [
 
+
+    {
+    date: "29 July 2026",
+    title: "WSEC 2026 Results",
+    content: [
+      "Good evening to all UK players, we are pleased to announce all shops have now concluded the sixth and final episode of the season, and as such the 2026 WSEC season has now concluded.",
+
+      "All automatically qualifying players will now have a rocket icon next to their names for ease of reference. Once we confirm the final few invites via the Top 24 and UK Open, we will summarise and list our 2026 UK representatives for the finals in Spain!",
+
+      "Watch this space for confirmation of dates for each event!"
+    ]
+  },
+
+  
   {
     date: "29 June 2026",
     title: "WSEC Qualifiers to Euro Finals - Update on Invites",
