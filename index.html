@@ -334,11 +334,8 @@ function changeShop() {
   renderLeaderboard();
 }
 
-function hasRocket(p, isSilver) {
-  if (isSilver) return true;
-  if (p.enableRocket === true) return true;
-  if (p.isRocket === true) return true;
-  return false;
+function hasRocket(p) {
+  return p.isRocket === true;
 }
 
 function rocketTooltip(isRocket, blueContext = false, shopName = "", rank = null) {
@@ -403,7 +400,7 @@ function renderLeaderboard() {
       const isGreen = shopWinners.has(p.player);
       const isBlue = blueSet.has(p.player);
 
-      const rocket = hasRocket(p, isSilver);
+      const rocket = hasRocket(p);
 
       let style = "";
 
@@ -448,7 +445,7 @@ function renderLeaderboard() {
       const isGreen = p.player === greenPlayer;
       const isBlue = bluePlayers.has(p.player);
 
-      const rocket = hasRocket(p, isSilver);
+      const rocket = hasRocket(p);
 
       const tooltip = isBlue
         ? rocketTooltip(false, true, currentShop, rank)
